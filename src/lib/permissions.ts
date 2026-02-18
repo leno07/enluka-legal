@@ -1,4 +1,4 @@
-import { Role } from "@/generated/prisma";
+import { Role } from "@prisma/client";
 import { hasMinRole } from "./roles";
 
 type Action = "create" | "read" | "update" | "delete" | "manage";

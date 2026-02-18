@@ -1,6 +1,6 @@
 import bcrypt from "bcryptjs";
 import jwt, { type SignOptions } from "jsonwebtoken";
-import { Role } from "@/generated/prisma";
+import { Role } from "@prisma/client";
 
 const JWT_SECRET = process.env.JWT_SECRET!;
 const ACCESS_EXPIRY = process.env.JWT_ACCESS_EXPIRY || "15m";

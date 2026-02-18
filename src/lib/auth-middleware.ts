@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { Role } from "@/generated/prisma";
+import { Role } from "@prisma/client";
 import { verifyAccessToken, TokenPayload } from "./auth";
 
 export interface AuthUser {

@@ -1,4 +1,4 @@
-import { Role } from "@/generated/prisma";
+import { Role } from "@prisma/client";
 
 export const ROLE_HIERARCHY: Record<Role, number> = {
   PARALEGAL: 1,

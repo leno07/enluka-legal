@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { AuditAction } from "@/generated/prisma";
+import { AuditAction } from "@prisma/client";
 import { prisma } from "./prisma";
 
 interface AuditLogParams {

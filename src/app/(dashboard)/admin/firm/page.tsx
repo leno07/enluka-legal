@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ROLE_LABELS } from "@/lib/roles";
-import { Role } from "@/generated/prisma";
+import { Role } from "@prisma/client";
 
 export default function FirmSettingsPage() {
   const { user } = useAuth();
