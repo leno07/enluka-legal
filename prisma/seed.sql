@@ -32,10 +32,10 @@ VALUES ('firm_demo_001', 'Demo Legal LLP', '612345', '1 Temple Row, London EC4Y 
 -- USERS (passwords: Admin123!, Solicitor123!, Senior123!, Paralegal123!)
 -- ============================================================
 INSERT INTO "users" ("id", "firm_id", "email", "password_hash", "first_name", "last_name", "role", "is_active", "created_at", "updated_at") VALUES
-('user_admin_001',  'firm_demo_001', 'admin@demo-legal.co.uk',     '$2b$10$mr7HfuIES4Q9UhCWcpd.ducK2EojTN1R2.RAhJ73i6GoS5Z2if9VO', 'Sarah',    'Mitchell', 'ADMIN',            true, NOW(), NOW()),
-('user_sol_001',    'firm_demo_001', 'solicitor@demo-legal.co.uk', '$2b$10$KRSIFsZbjN1PZdpKov7tQOBL3SGAnpcSproAGw1yHBRIsDXo3qejS', 'James',    'Hartley',  'SOLICITOR',        true, NOW(), NOW()),
-('user_senior_001', 'firm_demo_001', 'senior@demo-legal.co.uk',   '$2b$10$wKfr3BxF5Klj8dUmXwesxO8M.EDQ3NcUFJBlYN04okPMjdz3nUbh.', 'Victoria', 'Chen',     'SENIOR_SOLICITOR', true, NOW(), NOW()),
-('user_para_001',   'firm_demo_001', 'paralegal@demo-legal.co.uk','$2b$10$gSB4LqXF3ps.OzOdCOtiDunak8jyzi9KgDcdYIHlGWV5H5EpwN9nm', 'Tom',      'Barker',   'PARALEGAL',        true, NOW(), NOW());
+('user_admin_001',  'firm_demo_001', 'admin@demo-legal.co.uk',     '$2b$10$0t0UZVoRVKMVn7JTJuQkOONiSk5aYswngvhphOXSO7is01Pn3L696', 'Sarah',    'Mitchell', 'ADMIN',            true, NOW(), NOW()),
+('user_sol_001',    'firm_demo_001', 'solicitor@demo-legal.co.uk', '$2b$10$rzbyY2s0Mu7VmmjggPwJMenStku6v4emSrUHCHFXmQtMlfu2I/0Ky', 'James',    'Hartley',  'SOLICITOR',        true, NOW(), NOW()),
+('user_senior_001', 'firm_demo_001', 'senior@demo-legal.co.uk',   '$2b$10$cy.GXzNUTppLrh57dAIp7.1vDUdiMgMp/AUqmzqhthhDoeISkrX.e', 'Victoria', 'Chen',     'SENIOR_SOLICITOR', true, NOW(), NOW()),
+('user_para_001',   'firm_demo_001', 'paralegal@demo-legal.co.uk','$2b$10$x4WM7KFCi.x84kcPD/igfO.Wdtsw6P7dGBFJY5s23qliR8Pcq8iDW', 'Tom',      'Barker',   'PARALEGAL',        true, NOW(), NOW());
 
 -- ============================================================
 -- MATTERS (5 ACTIVE + 1 CLOSED = impressive dashboard count)
