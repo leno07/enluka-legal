@@ -15,7 +15,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Bell, LogOut, User, ChevronRight } from "lucide-react";
+import { Bell, LogOut, User, ChevronRight, Menu } from "lucide-react";
 import Link from "next/link";
 
 function useBreadcrumbs() {
@@ -46,7 +46,7 @@ function useBreadcrumbs() {
   return crumbs;
 }
 
-export function Topbar() {
+export function Topbar({ onMenuClick }: { onMenuClick?: () => void } = {}) {
   const { user, logout } = useAuth();
   const { apiFetch } = useApi();
   const crumbs = useBreadcrumbs();
@@ -65,9 +65,20 @@ export function Topbar() {
     : "??";
 
   return (
-    <header className="flex h-14 items-center justify-between border-b bg-background px-6">
-      {/* Breadcrumbs */}
-      <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+    <header className="flex h-14 items-center justify-between border-b bg-background px-3 md:px-6">
+      {/* Left: hamburger + breadcrumbs */}
+      <div className="flex items-center gap-2">
+        {/* Mobile hamburger */}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="md:hidden"
+          onClick={onMenuClick}
+        >
+          <Menu className="h-5 w-5" />
+        </Button>
+        {/* Breadcrumbs */}
+        <div className="hidden sm:flex items-center gap-1.5 text-sm text-muted-foreground">
         {crumbs.length === 0 ? (
           <span className="font-medium text-foreground">Dashboard</span>
         ) : (
@@ -91,6 +102,7 @@ export function Topbar() {
             </span>
           ))
         )}
+        </div>
       </div>
 
       {/* Right actions */}

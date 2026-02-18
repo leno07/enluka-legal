@@ -25,13 +25,13 @@ export default function MattersPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Matters</h1>
-          <p className="text-muted-foreground">Manage your legal cases</p>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Matters</h1>
+          <p className="text-muted-foreground text-sm">Manage your legal cases</p>
         </div>
         <Link href="/matters/new">
-          <Button>
+          <Button className="w-full sm:w-auto">
             <Plus className="mr-2 h-4 w-4" />
             New Matter
           </Button>

@@ -78,7 +78,7 @@ export default function NotificationsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Notifications</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Notifications</h1>
           <p className="text-muted-foreground">
             {data?.unreadCount || 0} unread notification(s)
           </p>
@@ -92,36 +92,36 @@ export default function NotificationsPage() {
               key={notification.id}
               className={notification.readAt ? "opacity-75" : ""}
             >
-              <CardContent className="flex items-start gap-4 py-4">
-                <div className="mt-1">
+              <CardContent className="flex items-start gap-3 py-4">
+                <div className="mt-1 shrink-0">
                   {typeIcons[notification.type] || (
                     <Bell className="h-4 w-4" />
                   )}
                 </div>
-                <div className="flex-1">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <p className="font-medium">{notification.title}</p>
+                <div className="flex-1 min-w-0">
+                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-1">
+                    <div className="min-w-0">
+                      <p className="font-medium text-sm sm:text-base">{notification.title}</p>
                       <p className="text-sm text-muted-foreground mt-1">
                         {notification.message}
                       </p>
                       {notification.calendarEvent && (
-                        <p className="text-xs text-muted-foreground mt-1">
+                        <p className="text-xs text-muted-foreground mt-1 truncate">
                           Matter: {notification.calendarEvent.matter?.reference}
                           {" - "}
                           {notification.calendarEvent.matter?.title}
                         </p>
                       )}
                     </div>
-                    <div className="text-right">
+                    <div className="flex items-center gap-2 sm:text-right shrink-0">
                       <span className="text-xs text-muted-foreground">
                         {format(
                           new Date(notification.createdAt),
-                          "d MMM yyyy HH:mm"
+                          "d MMM HH:mm"
                         )}
                       </span>
                       {!notification.readAt && (
-                        <Badge className="ml-2 bg-blue-100 text-blue-800">
+                        <Badge className="bg-blue-100 text-blue-800">
                           New
                         </Badge>
                       )}
@@ -137,12 +137,12 @@ export default function NotificationsPage() {
                   ) : (
                     <div className="mt-3">
                       {acknowledgeId === notification.id ? (
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-wrap items-center gap-2">
                           <Select
                             value={ackStatus}
                             onValueChange={setAckStatus}
                           >
-                            <SelectTrigger className="w-40">
+                            <SelectTrigger className="w-32 sm:w-40">
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>

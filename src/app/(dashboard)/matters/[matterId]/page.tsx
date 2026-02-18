@@ -123,11 +123,11 @@ export default function MatterWorkspacePage({
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-start justify-between">
-        <div>
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
           <p className="text-xs font-mono text-muted-foreground">{matter.reference}</p>
-          <h1 className="text-2xl font-bold tracking-tight">{matter.title}</h1>
-          <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight break-words">{matter.title}</h1>
+          <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs sm:text-sm text-muted-foreground">
             <span className="flex items-center gap-1.5">
               <Briefcase className="h-3.5 w-3.5" /> {matter.clientName}
             </span>
@@ -148,21 +148,23 @@ export default function MatterWorkspacePage({
 
       {/* Tabs */}
       <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="directions">
-            Directions ({directions?.length ?? matter._count.directions})
-          </TabsTrigger>
-          <TabsTrigger value="documents">
-            Documents ({documents?.length ?? matter._count.documents})
-          </TabsTrigger>
-          <TabsTrigger value="bundles">
-            Bundles ({bundles?.length ?? matter._count.bundles})
-          </TabsTrigger>
-          <TabsTrigger value="calendar">
-            Calendar ({calendarEvents?.length ?? matter._count.calendarEvents})
-          </TabsTrigger>
-        </TabsList>
+        <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
+          <TabsList className="inline-flex w-auto min-w-full sm:min-w-0">
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="directions">
+              Directions ({directions?.length ?? matter._count.directions})
+            </TabsTrigger>
+            <TabsTrigger value="documents">
+              Docs ({documents?.length ?? matter._count.documents})
+            </TabsTrigger>
+            <TabsTrigger value="bundles">
+              Bundles ({bundles?.length ?? matter._count.bundles})
+            </TabsTrigger>
+            <TabsTrigger value="calendar">
+              Calendar ({calendarEvents?.length ?? matter._count.calendarEvents})
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
         {/* === Overview === */}
         <TabsContent value="overview">
@@ -286,36 +288,22 @@ export default function MatterWorkspacePage({
               </Link>
             </div>
             {documents?.length > 0 ? (
-              <div className="rounded-lg border overflow-hidden">
-                <table className="w-full text-sm">
-                  <thead className="bg-muted/50">
-                    <tr className="text-left text-xs text-muted-foreground">
-                      <th className="px-3 py-2 font-medium">File</th>
-                      <th className="px-3 py-2 font-medium">Category</th>
-                      <th className="px-3 py-2 font-medium">Size</th>
-                      <th className="px-3 py-2 font-medium">Uploaded</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y">
-                    {documents.map((doc: any) => (
-                      <tr key={doc.id} className="hover:bg-muted/30 transition-colors">
-                        <td className="px-3 py-2">
-                          <div className="flex items-center gap-2">
-                            <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
-                            <span className="truncate max-w-[200px]">{doc.fileName}</span>
-                          </div>
-                        </td>
-                        <td className="px-3 py-2">
-                          <Badge variant="outline" className="text-[10px]">
-                            {CATEGORY_LABELS[doc.category] || doc.category}
-                          </Badge>
-                        </td>
-                        <td className="px-3 py-2 text-muted-foreground">{formatFileSize(doc.fileSize)}</td>
-                        <td className="px-3 py-2 text-muted-foreground">{format(new Date(doc.createdAt), "d MMM")}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              <div className="space-y-2">
+                {documents.map((doc: any) => (
+                  <div key={doc.id} className="flex items-center gap-3 rounded-lg border p-3 hover:bg-muted/30 transition-colors">
+                    <FileText className="h-5 w-5 text-muted-foreground shrink-0" />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium truncate">{doc.fileName}</p>
+                      <div className="flex items-center gap-2 mt-0.5 text-xs text-muted-foreground">
+                        <Badge variant="outline" className="text-[10px]">
+                          {CATEGORY_LABELS[doc.category] || doc.category}
+                        </Badge>
+                        <span>{formatFileSize(doc.fileSize)}</span>
+                        <span className="hidden sm:inline">{format(new Date(doc.createdAt), "d MMM")}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
             ) : (
               <div className="py-8 text-center text-sm text-muted-foreground">

@@ -87,8 +87,16 @@ export default function LoginPage() {
       </div>
 
       {/* Right panel - login form */}
-      <div className="flex flex-1 items-center justify-center bg-muted/30 p-6">
+      <div className="flex flex-1 items-center justify-center bg-muted/30 p-4 sm:p-6">
         <div className="w-full max-w-md space-y-6">
+          {/* Mobile branding - visible only on small screens */}
+          <div className="flex flex-col items-center gap-2 md:hidden">
+            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-[oklch(0.20_0.05_240)]">
+              <Scale className="h-7 w-7 text-white" />
+            </div>
+            <h1 className="text-xl font-bold tracking-tight">Enluka Legal</h1>
+            <p className="text-xs text-muted-foreground">Digital-First Practice Management</p>
+          </div>
           <LoginForm />
           <div className="rounded-lg border border-dashed border-muted-foreground/25 bg-muted/50 p-4">
             <p className="text-xs font-medium text-muted-foreground mb-2">Demo Credentials</p>
