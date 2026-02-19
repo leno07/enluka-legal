@@ -15,12 +15,12 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Bell, LogOut, User, ChevronRight, Menu } from "lucide-react";
+import { Bell, LogOut, User, ChevronRight, Menu, Plus, CalendarDays } from "lucide-react";
 import Link from "next/link";
+import { format } from "date-fns";
 
 function useBreadcrumbs() {
   const pathname = usePathname();
-  // Strip /dashboard for breadcrumb display, keep other paths as-is
   const cleanPath = pathname === "/dashboard" ? "" : pathname;
   const segments = cleanPath.split("/").filter(Boolean);
 
@@ -32,7 +32,6 @@ function useBreadcrumbs() {
       .replace(/[-_]/g, " ")
       .replace(/\b\w/g, (c) => c.toUpperCase());
 
-    // Skip UUIDs/CUIDs in breadcrumbs
     const isCuid = /^[a-z0-9]{20,}$/i.test(seg);
     if (isCuid) {
       crumbs.push({ label: "..." });
@@ -68,7 +67,6 @@ export function Topbar({ onMenuClick }: { onMenuClick?: () => void } = {}) {
     <header className="flex h-14 items-center justify-between border-b bg-background px-3 md:px-6">
       {/* Left: hamburger + breadcrumbs */}
       <div className="flex items-center gap-2">
-        {/* Mobile hamburger */}
         <Button
           variant="ghost"
           size="icon"
@@ -103,10 +101,22 @@ export function Topbar({ onMenuClick }: { onMenuClick?: () => void } = {}) {
           ))
         )}
         </div>
+        {/* Current date */}
+        <span className="hidden md:flex items-center gap-1.5 ml-4 text-xs text-muted-foreground border-l pl-4">
+          <CalendarDays className="h-3.5 w-3.5" />
+          {format(new Date(), "EEEE, d MMMM yyyy")}
+        </span>
       </div>
 
       {/* Right actions */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2">
+        <Link href="/matters/new" className="hidden md:block">
+          <Button size="sm" variant="outline" className="h-8 gap-1.5 text-xs">
+            <Plus className="h-3.5 w-3.5" />
+            New Matter
+          </Button>
+        </Link>
+
         <Link href="/notifications">
           <Button variant="ghost" size="icon" className="relative">
             <Bell className="h-5 w-5" />

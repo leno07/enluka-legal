@@ -13,6 +13,7 @@ import {
   LayoutDashboard,
   Briefcase,
   Calendar,
+  CalendarCheck,
   Bell,
   Settings,
   Shield,
@@ -23,6 +24,7 @@ const navItems = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { label: "Matters", href: "/matters", icon: Briefcase },
   { label: "Calendar", href: "/calendar", icon: Calendar },
+  { label: "Key Dates", href: "/key-dates", icon: CalendarCheck, showKeyDateBadge: true },
   { label: "Notifications", href: "/notifications", icon: Bell, showBadge: true },
 ];
 
@@ -44,7 +46,16 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void } = {}) {
     enabled: !!user,
   });
 
+  const { data: dashData } = useQuery({
+    queryKey: ["dashboard"],
+    queryFn: () => apiFetch("/api/dashboard"),
+    refetchInterval: 60000,
+    enabled: !!user,
+  });
+
   const unreadCount = notifData?.unreadCount ?? 0;
+  const keyDateUrgent = (dashData?.keyDatesSummary?.breached ?? 0) + (dashData?.keyDatesSummary?.overdue ?? 0);
+  const keyDateAtRisk = dashData?.keyDatesSummary?.atRisk ?? 0;
   const initials = user
     ? `${user.firstName[0]}${user.lastName[0]}`.toUpperCase()
     : "??";
@@ -53,7 +64,7 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void } = {}) {
     <aside className="flex h-full w-64 flex-col bg-[oklch(0.20_0.05_240)] text-white">
       {/* Brand */}
       <div className="flex h-16 items-center gap-3 border-b border-white/10 px-5">
-        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/10">
+        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-white/15 to-white/5">
           <Scale className="h-5 w-5 text-white" />
         </div>
         <div>
@@ -77,17 +88,31 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void } = {}) {
               href={item.href}
               onClick={onNavigate}
               className={cn(
-                "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-all duration-200",
+                "group flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-all duration-200",
                 isActive
-                  ? "border-l-3 border-white bg-white/10 text-white"
+                  ? "bg-gradient-to-r from-white/15 to-white/5 text-white shadow-sm shadow-white/5"
                   : "text-white/60 hover:bg-white/5 hover:text-white/90"
               )}
             >
-              <item.icon className="h-4 w-4" />
+              {isActive && (
+                <span className="absolute left-0 h-6 w-1 rounded-r-full bg-white" />
+              )}
+              <item.icon className="h-4 w-4 transition-transform duration-200 group-hover:scale-110" />
               <span className="flex-1">{item.label}</span>
               {item.showBadge && unreadCount > 0 && (
                 <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1.5 text-[10px] font-bold text-white">
                   {unreadCount > 99 ? "99+" : unreadCount}
+                </span>
+              )}
+              {item.showKeyDateBadge && keyDateUrgent > 0 && (
+                <span className="relative flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1.5 text-[10px] font-bold text-white">
+                  <span className="absolute inset-0 animate-ping rounded-full bg-red-400 opacity-30" />
+                  {keyDateUrgent}
+                </span>
+              )}
+              {item.showKeyDateBadge && keyDateUrgent === 0 && keyDateAtRisk > 0 && (
+                <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-500 px-1.5 text-[10px] font-bold text-white">
+                  {keyDateAtRisk}
                 </span>
               )}
             </Link>
@@ -113,13 +138,16 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void } = {}) {
                     href={item.href}
                     onClick={onNavigate}
                     className={cn(
-                      "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-all duration-200",
+                      "group flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-all duration-200",
                       isActive
-                        ? "border-l-3 border-white bg-white/10 text-white"
+                        ? "bg-gradient-to-r from-white/15 to-white/5 text-white shadow-sm shadow-white/5"
                         : "text-white/60 hover:bg-white/5 hover:text-white/90"
                     )}
                   >
-                    <item.icon className="h-4 w-4" />
+                    {isActive && (
+                      <span className="absolute left-0 h-6 w-1 rounded-r-full bg-white" />
+                    )}
+                    <item.icon className="h-4 w-4 transition-transform duration-200 group-hover:scale-110" />
                     {item.label}
                   </Link>
                 );
@@ -131,9 +159,9 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void } = {}) {
       {/* User info */}
       {user && (
         <div className="border-t border-white/10 p-3">
-          <div className="flex items-center gap-3 rounded-lg bg-white/5 p-3">
+          <div className="flex items-center gap-3 rounded-lg bg-white/5 p-3 transition-colors hover:bg-white/8">
             <Avatar className="h-9 w-9">
-              <AvatarFallback className="bg-white/10 text-xs text-white">
+              <AvatarFallback className="bg-gradient-to-br from-primary/60 to-primary/30 text-xs text-white">
                 {initials}
               </AvatarFallback>
             </Avatar>

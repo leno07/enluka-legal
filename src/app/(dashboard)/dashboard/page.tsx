@@ -21,14 +21,22 @@ import {
   Clock,
   ArrowRight,
   FileText,
+  CalendarCheck,
 } from "lucide-react";
-import { formatDistanceToNow, isPast, differenceInDays } from "date-fns";
+import { formatDistanceToNow, differenceInDays, differenceInHours } from "date-fns";
 
 const STATUS_COLORS: Record<string, string> = {
   ACTIVE: "bg-green-100 text-green-700",
   ON_HOLD: "bg-amber-100 text-amber-700",
   CLOSED: "bg-gray-100 text-gray-600",
   ARCHIVED: "bg-gray-100 text-gray-500",
+};
+
+const KEY_DATE_STATUS_COLORS: Record<string, string> = {
+  BREACH: "bg-red-100 text-red-800 border-red-200",
+  OVERDUE: "bg-red-50 text-red-700 border-red-200",
+  AT_RISK: "bg-amber-50 text-amber-700 border-amber-200",
+  ON_TRACK: "bg-green-50 text-green-700 border-green-200",
 };
 
 export default function DashboardPage() {
@@ -40,6 +48,9 @@ export default function DashboardPage() {
     queryFn: () => apiFetch("/api/dashboard"),
     enabled: !!user,
   });
+
+  const kdSummary = data?.keyDatesSummary;
+  const kdUrgentTotal = (kdSummary?.breached ?? 0) + (kdSummary?.overdue ?? 0);
 
   return (
     <div className="space-y-6">
@@ -53,8 +64,8 @@ export default function DashboardPage() {
         </p>
       </div>
 
-      {/* Metric cards */}
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+      {/* Metric cards — 5 cards */}
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-5">
         <Card className="border-l-4 border-l-primary">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Active Matters</CardTitle>
@@ -126,10 +137,35 @@ export default function DashboardPage() {
             )}
           </CardContent>
         </Card>
+
+        <Card className={`border-l-4 ${kdUrgentTotal > 0 ? "border-l-red-500" : "border-l-teal-500"}`}>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Key Dates</CardTitle>
+            <CalendarCheck className={`h-4 w-4 ${kdUrgentTotal > 0 ? "text-red-500" : "text-teal-500"}`} />
+          </CardHeader>
+          <CardContent>
+            {isLoading ? (
+              <Skeleton className="h-8 w-12" />
+            ) : (
+              <>
+                <div className={`text-3xl font-bold ${kdUrgentTotal > 0 ? "text-red-600" : ""}`}>
+                  {kdSummary?.total ?? 0}
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {kdUrgentTotal > 0
+                    ? `${kdUrgentTotal} need attention`
+                    : kdSummary?.atRisk
+                      ? `${kdSummary.atRisk} at risk`
+                      : "All on track"}
+                </p>
+              </>
+            )}
+          </CardContent>
+        </Card>
       </div>
 
-      {/* Bottom sections */}
-      <div className="grid gap-6 lg:grid-cols-2">
+      {/* Bottom sections — 3 columns */}
+      <div className="grid gap-6 lg:grid-cols-3">
         {/* Recent Matters */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
@@ -154,7 +190,7 @@ export default function DashboardPage() {
                   <Link
                     key={matter.id}
                     href={`/matters/${matter.id}`}
-                    className="flex items-center justify-between rounded-lg border p-3 transition-colors hover:bg-muted/50"
+                    className="flex items-center justify-between rounded-lg border p-3 transition-all duration-200 hover:bg-muted/50 hover:shadow-sm"
                   >
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">
@@ -218,7 +254,7 @@ export default function DashboardPage() {
                   return (
                     <div
                       key={event.id}
-                      className="flex items-center gap-3 rounded-lg border p-3"
+                      className="flex items-center gap-3 rounded-lg border p-3 transition-all duration-200 hover:shadow-sm"
                     >
                       <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-md text-xs font-bold ${urgencyColor}`}>
                         {daysLeft <= 0 ? "!" : `${daysLeft}d`}
@@ -239,6 +275,89 @@ export default function DashboardPage() {
               <p className="text-sm text-muted-foreground">
                 No upcoming deadlines. Confirm court directions to create calendar events.
               </p>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Key Dates at Risk */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+              <CardTitle className="text-base">Key Dates</CardTitle>
+              <CardDescription>
+                {kdSummary ? (
+                  <span className="flex items-center gap-2 flex-wrap">
+                    {kdSummary.breached > 0 && <Badge variant="destructive" className="text-[10px]">{kdSummary.breached} Breach</Badge>}
+                    {kdSummary.overdue > 0 && <Badge className="text-[10px] bg-red-100 text-red-700">{kdSummary.overdue} Overdue</Badge>}
+                    {kdSummary.atRisk > 0 && <Badge className="text-[10px] bg-amber-100 text-amber-700">{kdSummary.atRisk} At Risk</Badge>}
+                    {kdSummary.onTrack > 0 && <Badge className="text-[10px] bg-green-100 text-green-700">{kdSummary.onTrack} On Track</Badge>}
+                  </span>
+                ) : "Legal key date tracking"}
+              </CardDescription>
+            </div>
+            <Link href="/key-dates" className="text-xs text-primary hover:underline flex items-center gap-1">
+              View all <ArrowRight className="h-3 w-3" />
+            </Link>
+          </CardHeader>
+          <CardContent>
+            {isLoading ? (
+              <div className="space-y-3">
+                {[1, 2, 3].map((i) => (
+                  <Skeleton key={i} className="h-14 w-full" />
+                ))}
+              </div>
+            ) : data?.upcomingKeyDates?.length > 0 ? (
+              <div className="space-y-2">
+                {data.upcomingKeyDates.map((kd: any) => {
+                  const dueDate = new Date(kd.dueDate);
+                  const daysLeft = differenceInDays(dueDate, new Date());
+                  const isBreach = kd.status === "BREACH";
+                  const isOverdue = kd.status === "OVERDUE";
+
+                  return (
+                    <Link
+                      key={kd.id}
+                      href={`/matters/${kd.matter?.id}`}
+                      className={`flex items-center gap-3 rounded-lg border p-3 transition-all duration-200 hover:shadow-sm ${
+                        isBreach ? "border-red-300 bg-red-50/50" :
+                        isOverdue ? "border-red-200 bg-red-50/30" : ""
+                      }`}
+                    >
+                      <div className="relative">
+                        <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-md text-[10px] font-bold ${KEY_DATE_STATUS_COLORS[kd.status]}`}>
+                          {isBreach ? "48h+" :
+                           isOverdue ? `${Math.abs(daysLeft)}d` :
+                           daysLeft <= 0 ? "!" : `${daysLeft}d`}
+                        </div>
+                        {isBreach && (
+                          <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75" />
+                            <span className="relative inline-flex h-3 w-3 rounded-full bg-red-500" />
+                          </span>
+                        )}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <p className="truncate text-sm font-medium">{kd.title}</p>
+                          <Badge variant="outline" className={`text-[10px] shrink-0 ${KEY_DATE_STATUS_COLORS[kd.status]}`}>
+                            {kd.status.replace("_", " ")}
+                          </Badge>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          {kd.matter?.reference} &middot; {kd.keyDateOwner?.firstName} {kd.keyDateOwner?.lastName}
+                        </p>
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="py-6 text-center">
+                <CalendarCheck className="mx-auto h-8 w-8 text-muted-foreground/50" />
+                <p className="mt-2 text-sm text-muted-foreground">
+                  No key dates. Add key dates to matters to track legal deadlines.
+                </p>
+              </div>
             )}
           </CardContent>
         </Card>

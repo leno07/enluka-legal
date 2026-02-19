@@ -87,6 +87,13 @@ enum EscalationTier {
   OVERDUE
 }
 
+enum KeyDateStatus {
+  ON_TRACK
+  AT_RISK
+  OVERDUE
+  BREACH
+}
+
 enum AuditAction {
   CREATE
   UPDATE
@@ -141,17 +148,21 @@ model User {
   createdAt    DateTime  @default(now()) @map("created_at")
   updatedAt    DateTime  @updatedAt @map("updated_at")
 
-  firm              Firm               @relation(fields: [firmId], references: [id])
-  supervisor        User?              @relation("SupervisorRelation", fields: [supervisorId], references: [id])
-  supervisees       User[]             @relation("SupervisorRelation")
-  refreshTokens     RefreshToken[]
-  matterAssignments MatterAssignment[]
-  ownedMatters      Matter[]           @relation("MatterOwner")
-  notifications     Notification[]
-  acknowledgements  Acknowledgement[]
-  auditLogs         AuditLog[]         @relation("AuditUser")
-  uploadedDocuments Document[]
-  createdBundles    Bundle[]
+  firm                Firm               @relation(fields: [firmId], references: [id])
+  supervisor          User?              @relation("SupervisorRelation", fields: [supervisorId], references: [id])
+  supervisees         User[]             @relation("SupervisorRelation")
+  refreshTokens       RefreshToken[]
+  matterAssignments   MatterAssignment[]
+  ownedMatters        Matter[]           @relation("MatterOwner")
+  managedMatters      Matter[]           @relation("MatterManager")
+  partneredMatters    Matter[]           @relation("MatterPartner")
+  clientPartnerMatters Matter[]          @relation("ClientPartner")
+  ownedKeyDates       KeyDate[]
+  notifications       Notification[]
+  acknowledgements    Acknowledgement[]
+  auditLogs           AuditLog[]         @relation("AuditUser")
+  uploadedDocuments   Document[]
+  createdBundles      Bundle[]
 
   @@index([firmId])
   @@index([email])
@@ -179,28 +190,35 @@ model RefreshToken {
 // ============================================================
 
 model Matter {
-  id              String       @id @default(cuid())
-  firmId          String       @map("firm_id")
-  reference       String
-  title           String
-  clientName      String       @map("client_name")
-  clientReference String?      @map("client_reference")
-  court           String?
-  caseNumber      String?      @map("case_number")
-  judge           String?
-  status          MatterStatus @default(ACTIVE)
-  ownerId         String       @map("owner_id")
-  description     String?
-  createdAt       DateTime     @default(now()) @map("created_at")
-  updatedAt       DateTime     @updatedAt @map("updated_at")
+  id               String       @id @default(cuid())
+  firmId           String       @map("firm_id")
+  reference        String
+  title            String
+  clientName       String       @map("client_name")
+  clientReference  String?      @map("client_reference")
+  court            String?
+  caseNumber       String?      @map("case_number")
+  judge            String?
+  status           MatterStatus @default(ACTIVE)
+  ownerId          String       @map("owner_id")
+  matterManagerId  String?      @map("matter_manager_id")
+  matterPartnerId  String?      @map("matter_partner_id")
+  clientPartnerId  String?      @map("client_partner_id")
+  description      String?
+  createdAt        DateTime     @default(now()) @map("created_at")
+  updatedAt        DateTime     @updatedAt @map("updated_at")
 
   firm           Firm               @relation(fields: [firmId], references: [id])
   owner          User               @relation("MatterOwner", fields: [ownerId], references: [id])
+  matterManager  User?              @relation("MatterManager", fields: [matterManagerId], references: [id])
+  matterPartner  User?              @relation("MatterPartner", fields: [matterPartnerId], references: [id])
+  clientPartner  User?              @relation("ClientPartner", fields: [clientPartnerId], references: [id])
   assignments    MatterAssignment[]
   directions     Direction[]
   documents      Document[]
   bundles        Bundle[]
   calendarEvents CalendarEvent[]
+  keyDates       KeyDate[]
 
   @@unique([firmId, reference])
   @@index([firmId])
@@ -449,6 +467,34 @@ model EscalationEvent {
   @@index([escalatedToId])
   @@index([tier])
   @@map("escalation_events")
+}
+
+// ============================================================
+// KEY DATES
+// ============================================================
+
+model KeyDate {
+  id             String        @id @default(cuid())
+  matterId       String        @map("matter_id")
+  title          String
+  description    String?
+  dueDate        DateTime      @map("due_date")
+  status         KeyDateStatus @default(ON_TRACK)
+  keyDateOwnerId String        @map("key_date_owner_id")
+  priority       String        @default("NORMAL")
+  completedAt    DateTime?     @map("completed_at")
+  breachedAt     DateTime?     @map("breached_at")
+  createdAt      DateTime      @default(now()) @map("created_at")
+  updatedAt      DateTime      @updatedAt @map("updated_at")
+
+  matter       Matter @relation(fields: [matterId], references: [id], onDelete: Cascade)
+  keyDateOwner User   @relation(fields: [keyDateOwnerId], references: [id])
+
+  @@index([matterId])
+  @@index([status])
+  @@index([dueDate])
+  @@index([keyDateOwnerId])
+  @@map("key_dates")
 }
 
 // ============================================================

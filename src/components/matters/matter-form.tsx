@@ -3,9 +3,11 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
+import { useQuery } from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { createMatterSchema, CreateMatterInput } from "@/lib/validators/matter";
 import { useApi } from "@/hooks/use-api";
+import { useAuth } from "@/providers/auth-provider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -24,13 +26,27 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 export function MatterForm() {
   const router = useRouter();
   const { apiFetch } = useApi();
+  const { user } = useAuth();
   const [error, setError] = useState<string | null>(null);
+
+  const { data: members } = useQuery({
+    queryKey: ["firm-members"],
+    queryFn: () => apiFetch(`/api/firms/${user?.firmId}/members`),
+    enabled: !!user?.firmId,
+  });
 
   const form = useForm<CreateMatterInput>({
     resolver: zodResolver(createMatterSchema),
@@ -42,15 +58,22 @@ export function MatterForm() {
       caseNumber: "",
       judge: "",
       description: "",
+      matterManagerId: "",
+      matterPartnerId: "",
+      clientPartnerId: "",
     },
   });
 
   const onSubmit = async (data: CreateMatterInput) => {
     setError(null);
     try {
+      const payload = { ...data };
+      if (!payload.matterManagerId) delete payload.matterManagerId;
+      if (!payload.matterPartnerId) delete payload.matterPartnerId;
+      if (!payload.clientPartnerId) delete payload.clientPartnerId;
       const matter = await apiFetch("/api/matters", {
         method: "POST",
-        body: JSON.stringify(data),
+        body: JSON.stringify(payload),
       });
       toast.success(`Matter ${matter.reference} created`);
       router.push(`/matters/${matter.id}`);
@@ -183,6 +206,77 @@ export function MatterForm() {
                 </FormItem>
               )}
             />
+
+            {/* Matter Team Roles */}
+            <div className="space-y-1 pt-2">
+              <p className="text-sm font-medium">Matter Team (optional)</p>
+              <p className="text-xs text-muted-foreground">Assign team roles for key date escalation</p>
+            </div>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+              <FormField
+                control={form.control}
+                name="matterManagerId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Matter Manager</FormLabel>
+                    <Select value={field.value || ""} onValueChange={(v) => field.onChange(v === "_none" ? "" : v)}>
+                      <FormControl>
+                        <SelectTrigger><SelectValue placeholder="Select..." /></SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="_none">None</SelectItem>
+                        {members?.map((m: any) => (
+                          <SelectItem key={m.id} value={m.id}>{m.firstName} {m.lastName}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="matterPartnerId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Matter Partner</FormLabel>
+                    <Select value={field.value || ""} onValueChange={(v) => field.onChange(v === "_none" ? "" : v)}>
+                      <FormControl>
+                        <SelectTrigger><SelectValue placeholder="Select..." /></SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="_none">None</SelectItem>
+                        {members?.map((m: any) => (
+                          <SelectItem key={m.id} value={m.id}>{m.firstName} {m.lastName}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="clientPartnerId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Client Partner</FormLabel>
+                    <Select value={field.value || ""} onValueChange={(v) => field.onChange(v === "_none" ? "" : v)}>
+                      <FormControl>
+                        <SelectTrigger><SelectValue placeholder="Select..." /></SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="_none">None</SelectItem>
+                        {members?.map((m: any) => (
+                          <SelectItem key={m.id} value={m.id}>{m.firstName} {m.lastName}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
 
             <div className="flex gap-4 pt-4">
               <Button

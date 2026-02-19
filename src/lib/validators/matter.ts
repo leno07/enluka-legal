@@ -9,6 +9,9 @@ export const createMatterSchema = z.object({
   judge: z.string().max(200).optional(),
   description: z.string().max(2000).optional(),
   assigneeIds: z.array(z.string()).optional(),
+  matterManagerId: z.string().optional(),
+  matterPartnerId: z.string().optional(),
+  clientPartnerId: z.string().optional(),
 });
 
 export const updateMatterSchema = z.object({
@@ -20,6 +23,9 @@ export const updateMatterSchema = z.object({
   judge: z.string().max(200).nullable().optional(),
   description: z.string().max(2000).nullable().optional(),
   status: z.enum(["ACTIVE", "ON_HOLD", "CLOSED", "ARCHIVED"]).optional(),
+  matterManagerId: z.string().nullable().optional(),
+  matterPartnerId: z.string().nullable().optional(),
+  clientPartnerId: z.string().nullable().optional(),
 });
 
 export const assignMatterSchema = z.object({

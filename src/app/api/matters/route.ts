@@ -97,6 +97,9 @@ export async function POST(req: NextRequest) {
           judge: validated.judge || null,
           description: validated.description || null,
           ownerId: user.id,
+          matterManagerId: validated.matterManagerId || null,
+          matterPartnerId: validated.matterPartnerId || null,
+          clientPartnerId: validated.clientPartnerId || null,
         },
         include: {
           owner: {

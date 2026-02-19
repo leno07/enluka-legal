@@ -1,20 +1,36 @@
 "use client";
 
-import { use } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { use, useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useApi } from "@/hooks/use-api";
+import { useAuth } from "@/providers/auth-provider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   Briefcase,
   Calendar,
@@ -22,14 +38,16 @@ import {
   Clock,
   FileText,
   FolderOpen,
+  Pencil,
   Target,
   Upload,
   Users,
-  AlertTriangle,
   ArrowRight,
-  Download,
+  CalendarCheck,
 } from "lucide-react";
 import { format, differenceInDays } from "date-fns";
+import { toast } from "sonner";
+import { MatterKeyDates } from "@/components/matters/matter-key-dates";
 
 const STATUS_COLORS: Record<string, string> = {
   ACTIVE: "bg-green-100 text-green-700",
@@ -64,6 +82,22 @@ function formatFileSize(bytes: number) {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
+function RoleRow({ label, user: roleUser }: { label: string; user: any | null }) {
+  if (!roleUser) return null;
+  const initials = `${roleUser.firstName[0]}${roleUser.lastName[0]}`.toUpperCase();
+  return (
+    <div className="flex items-center justify-between">
+      <div className="flex items-center gap-2">
+        <Avatar className="h-6 w-6">
+          <AvatarFallback className="text-[9px] bg-primary/10 text-primary">{initials}</AvatarFallback>
+        </Avatar>
+        <span className="text-sm">{roleUser.firstName} {roleUser.lastName}</span>
+      </div>
+      <Badge variant="outline" className="text-[10px]">{label}</Badge>
+    </div>
+  );
+}
+
 export default function MatterWorkspacePage({
   params,
 }: {
@@ -71,6 +105,31 @@ export default function MatterWorkspacePage({
 }) {
   const { matterId } = use(params);
   const { apiFetch } = useApi();
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const [rolesDialogOpen, setRolesDialogOpen] = useState(false);
+  const [roleEdits, setRoleEdits] = useState({ matterManagerId: "", matterPartnerId: "", clientPartnerId: "" });
+
+  const { data: members } = useQuery({
+    queryKey: ["firm-members"],
+    queryFn: () => apiFetch(`/api/firms/${user?.firmId}/members`),
+    enabled: !!user?.firmId,
+  });
+
+  const updateRolesMutation = useMutation({
+    mutationFn: (data: any) =>
+      apiFetch(`/api/matters/${matterId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["matter", matterId] });
+      setRolesDialogOpen(false);
+      toast.success("Matter team roles updated");
+    },
+    onError: () => toast.error("Failed to update roles"),
+  });
 
   const { data: matter, isLoading } = useQuery({
     queryKey: ["matter", matterId],
@@ -101,6 +160,12 @@ export default function MatterWorkspacePage({
     enabled: !!matter,
   });
 
+  const { data: keyDates } = useQuery({
+    queryKey: ["key-dates", matterId],
+    queryFn: () => apiFetch(`/api/matters/${matterId}/key-dates`),
+    enabled: !!matter,
+  });
+
   if (isLoading) {
     return (
       <div className="space-y-6">
@@ -119,6 +184,10 @@ export default function MatterWorkspacePage({
       </div>
     );
   }
+
+  // Key date urgency for tab badge
+  const kdUrgent = (keyDates || []).filter((kd: any) => !kd.completedAt && (kd.status === "BREACH" || kd.status === "OVERDUE")).length;
+  const kdAtRisk = (keyDates || []).filter((kd: any) => !kd.completedAt && kd.status === "AT_RISK").length;
 
   return (
     <div className="space-y-6">
@@ -154,6 +223,19 @@ export default function MatterWorkspacePage({
             <TabsTrigger value="directions">
               Directions ({directions?.length ?? matter._count.directions})
             </TabsTrigger>
+            <TabsTrigger value="key-dates" className="relative">
+              Key Dates ({keyDates?.length ?? matter._count.keyDates ?? 0})
+              {kdUrgent > 0 && (
+                <span className="ml-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white">
+                  {kdUrgent}
+                </span>
+              )}
+              {kdUrgent === 0 && kdAtRisk > 0 && (
+                <span className="ml-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-500 px-1 text-[9px] font-bold text-white">
+                  {kdAtRisk}
+                </span>
+              )}
+            </TabsTrigger>
             <TabsTrigger value="documents">
               Docs ({documents?.length ?? matter._count.documents})
             </TabsTrigger>
@@ -188,23 +270,97 @@ export default function MatterWorkspacePage({
               </CardContent>
             </Card>
             <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Team</CardTitle>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-base">Matter Team</CardTitle>
+                <Dialog open={rolesDialogOpen} onOpenChange={(open) => {
+                  setRolesDialogOpen(open);
+                  if (open) {
+                    setRoleEdits({
+                      matterManagerId: matter.matterManager?.id || "_none",
+                      matterPartnerId: matter.matterPartner?.id || "_none",
+                      clientPartnerId: matter.clientPartner?.id || "_none",
+                    });
+                  }
+                }}>
+                  <DialogTrigger asChild>
+                    <Button variant="ghost" size="sm" className="h-7 text-xs">
+                      <Pencil className="mr-1 h-3 w-3" /> Edit
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Edit Matter Team Roles</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                      <div>
+                        <Label>Matter Manager</Label>
+                        <Select value={roleEdits.matterManagerId} onValueChange={(v) => setRoleEdits({ ...roleEdits, matterManagerId: v })}>
+                          <SelectTrigger><SelectValue placeholder="Select..." /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="_none">None</SelectItem>
+                            {members?.map((m: any) => (
+                              <SelectItem key={m.id} value={m.id}>{m.firstName} {m.lastName} ({m.role})</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label>Matter Partner</Label>
+                        <Select value={roleEdits.matterPartnerId} onValueChange={(v) => setRoleEdits({ ...roleEdits, matterPartnerId: v })}>
+                          <SelectTrigger><SelectValue placeholder="Select..." /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="_none">None</SelectItem>
+                            {members?.map((m: any) => (
+                              <SelectItem key={m.id} value={m.id}>{m.firstName} {m.lastName} ({m.role})</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label>Client Partner</Label>
+                        <Select value={roleEdits.clientPartnerId} onValueChange={(v) => setRoleEdits({ ...roleEdits, clientPartnerId: v })}>
+                          <SelectTrigger><SelectValue placeholder="Select..." /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="_none">None</SelectItem>
+                            {members?.map((m: any) => (
+                              <SelectItem key={m.id} value={m.id}>{m.firstName} {m.lastName} ({m.role})</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <Button
+                        className="w-full"
+                        disabled={updateRolesMutation.isPending}
+                        onClick={() => {
+                          updateRolesMutation.mutate({
+                            matterManagerId: roleEdits.matterManagerId === "_none" ? null : roleEdits.matterManagerId,
+                            matterPartnerId: roleEdits.matterPartnerId === "_none" ? null : roleEdits.matterPartnerId,
+                            clientPartnerId: roleEdits.clientPartnerId === "_none" ? null : roleEdits.clientPartnerId,
+                          });
+                        }}
+                      >
+                        {updateRolesMutation.isPending ? "Saving..." : "Save Roles"}
+                      </Button>
+                    </div>
+                  </DialogContent>
+                </Dialog>
               </CardHeader>
-              <CardContent className="space-y-2 text-sm">
-                <div className="flex items-center justify-between">
-                  <span>{matter.owner.firstName} {matter.owner.lastName}</span>
-                  <Badge variant="outline" className="text-[10px]">Owner</Badge>
-                </div>
-                {matter.assignments?.map((a: any) => (
-                  <div key={a.user.id} className="flex items-center justify-between">
-                    <span>{a.user.firstName} {a.user.lastName}</span>
-                    <Badge variant="outline" className="text-[10px]">{a.role}</Badge>
-                  </div>
+              <CardContent className="space-y-3 text-sm">
+                <RoleRow label="Owner" user={matter.owner} />
+                <RoleRow label="Matter Manager" user={matter.matterManager} />
+                <RoleRow label="Matter Partner" user={matter.matterPartner} />
+                <RoleRow label="Client Partner" user={matter.clientPartner} />
+                {matter.assignments?.filter((a: any) => a.user.id !== matter.owner.id).map((a: any) => (
+                  <RoleRow key={a.user.id} label={a.role} user={a.user} />
                 ))}
               </CardContent>
             </Card>
           </div>
+        </TabsContent>
+
+        {/* === Key Dates === */}
+        <TabsContent value="key-dates">
+          <MatterKeyDates matterId={matterId} matter={matter} />
         </TabsContent>
 
         {/* === Directions (inline) === */}

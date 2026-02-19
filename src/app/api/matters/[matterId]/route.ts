@@ -26,21 +26,22 @@ export async function GET(
 
   const { matterId } = await params;
 
+  const userSelect = { id: true, firstName: true, lastName: true, email: true, role: true };
+
   const matter = await prisma.matter.findFirst({
     where: { id: matterId, firmId: user.firmId },
     include: {
-      owner: {
-        select: { id: true, firstName: true, lastName: true, email: true, role: true },
-      },
+      owner: { select: userSelect },
+      matterManager: { select: userSelect },
+      matterPartner: { select: userSelect },
+      clientPartner: { select: userSelect },
       assignments: {
         include: {
-          user: {
-            select: { id: true, firstName: true, lastName: true, email: true, role: true },
-          },
+          user: { select: userSelect },
         },
       },
       _count: {
-        select: { directions: true, documents: true, bundles: true, calendarEvents: true },
+        select: { directions: true, documents: true, bundles: true, calendarEvents: true, keyDates: true },
       },
     },
   });

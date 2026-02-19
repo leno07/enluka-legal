@@ -18,6 +18,8 @@ export async function GET(req: NextRequest) {
     recentMatters,
     pendingNotifications,
     upcomingEvents,
+    keyDatesAll,
+    upcomingKeyDates,
   ] = await Promise.all([
     // Active matters count
     prisma.matter.count({
@@ -83,7 +85,61 @@ export async function GET(req: NextRequest) {
         matter: { select: { id: true, reference: true, title: true } },
       },
     }),
+
+    // All key dates for summary (not completed)
+    prisma.keyDate.findMany({
+      where: {
+        matter: { firmId: user.firmId },
+        completedAt: null,
+      },
+      select: { id: true, status: true, dueDate: true },
+    }),
+
+    // Next 5 upcoming key dates sorted by urgency
+    prisma.keyDate.findMany({
+      where: {
+        matter: { firmId: user.firmId },
+        completedAt: null,
+      },
+      orderBy: { dueDate: "asc" },
+      take: 5,
+      include: {
+        matter: { select: { id: true, reference: true, title: true } },
+        keyDateOwner: { select: { id: true, firstName: true, lastName: true } },
+      },
+    }),
   ]);
+
+  // Compute key dates summary with recalculated statuses
+  const keyDatesSummary = { total: 0, onTrack: 0, atRisk: 0, overdue: 0, breached: 0 };
+  for (const kd of keyDatesAll) {
+    keyDatesSummary.total++;
+    const hoursOverdue = (now.getTime() - kd.dueDate.getTime()) / (1000 * 60 * 60);
+    if (hoursOverdue >= 48) keyDatesSummary.breached++;
+    else if (hoursOverdue > 0) keyDatesSummary.overdue++;
+    else {
+      const daysUntil = Math.ceil((kd.dueDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+      if (daysUntil <= 5) keyDatesSummary.atRisk++;
+      else keyDatesSummary.onTrack++;
+    }
+  }
+
+  // Recalculate statuses for upcoming key dates
+  const upcomingKeyDatesWithStatus = upcomingKeyDates.map((kd) => {
+    const hoursOverdue = (now.getTime() - kd.dueDate.getTime()) / (1000 * 60 * 60);
+    let status: string;
+    if (hoursOverdue >= 48) status = "BREACH";
+    else if (hoursOverdue > 0) status = "OVERDUE";
+    else {
+      const daysUntil = Math.ceil((kd.dueDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+      status = daysUntil <= 5 ? "AT_RISK" : "ON_TRACK";
+    }
+    return { ...kd, status };
+  });
+
+  // Sort by urgency
+  const statusOrder: Record<string, number> = { BREACH: 0, OVERDUE: 1, AT_RISK: 2, ON_TRACK: 3 };
+  upcomingKeyDatesWithStatus.sort((a, b) => statusOrder[a.status] - statusOrder[b.status]);
 
   return NextResponse.json({
     activeMatters,
@@ -93,5 +149,7 @@ export async function GET(req: NextRequest) {
     recentMatters,
     pendingNotifications,
     upcomingEvents,
+    keyDatesSummary,
+    upcomingKeyDates: upcomingKeyDatesWithStatus,
   });
 }
