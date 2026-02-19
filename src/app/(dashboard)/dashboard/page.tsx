@@ -24,6 +24,12 @@ import {
 } from "@/components/ui/dialog";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
+import {
   Briefcase,
   Calendar,
   AlertTriangle,
@@ -36,6 +42,7 @@ import {
   TrendingUp,
   Users,
   Target,
+  Filter,
 } from "lucide-react";
 import { formatDistanceToNow, differenceInDays, differenceInHours, format } from "date-fns";
 
@@ -60,6 +67,9 @@ export default function DashboardPage() {
   const { apiFetch } = useApi();
   const router = useRouter();
   const [activePanel, setActivePanel] = useState<PanelType>(null);
+  const [matterFilter, setMatterFilter] = useState<string>("ALL");
+  const [deadlineFilter, setDeadlineFilter] = useState<string>("ALL");
+  const [keyDateFilter, setKeyDateFilter] = useState<string>("ALL");
 
   const { data, isLoading } = useQuery({
     queryKey: ["dashboard"],
@@ -520,206 +530,274 @@ export default function DashboardPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Bottom sections — 3 columns */}
-      <div className="grid gap-4 md:gap-6 lg:grid-cols-3">
-        {/* Recent Matters */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div>
-              <CardTitle className="text-base">Recent Matters</CardTitle>
-              <CardDescription>Your most recently active cases</CardDescription>
+      {/* Bottom section — Tabbed sub-grid with filters */}
+      <Card>
+        <Tabs defaultValue="matters" className="w-full">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <TabsList className="h-9">
+                <TabsTrigger value="matters" className="text-xs sm:text-sm gap-1.5">
+                  <Briefcase className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">Recent</span> Matters
+                </TabsTrigger>
+                <TabsTrigger value="deadlines" className="text-xs sm:text-sm gap-1.5">
+                  <Calendar className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">Upcoming</span> Deadlines
+                </TabsTrigger>
+                <TabsTrigger value="keydates" className="text-xs sm:text-sm gap-1.5">
+                  <CalendarCheck className="h-3.5 w-3.5" />
+                  Key Dates
+                  {kdUrgentTotal > 0 && (
+                    <Badge variant="destructive" className="text-[9px] h-4 px-1 ml-0.5">{kdUrgentTotal}</Badge>
+                  )}
+                </TabsTrigger>
+              </TabsList>
             </div>
-            <Link href="/matters" className="text-xs text-primary hover:underline flex items-center gap-1">
-              View all <ArrowRight className="h-3 w-3" />
-            </Link>
           </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <div className="space-y-3">
-                {[1, 2, 3].map((i) => (
-                  <Skeleton key={i} className="h-14 w-full" />
-                ))}
-              </div>
-            ) : data?.recentMatters?.length > 0 ? (
-              <div className="space-y-2">
-                {data.recentMatters.map((matter: any) => (
-                  <Link
-                    key={matter.id}
-                    href={`/matters/${matter.id}`}
-                    className="flex items-center justify-between rounded-lg border p-3 transition-all duration-200 hover:bg-muted/50 hover:shadow-sm group"
-                  >
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-xs font-mono text-muted-foreground">
-                          {matter.reference}
-                        </span>
-                        <Badge variant="secondary" className={`text-[10px] ${STATUS_COLORS[matter.status] || ""}`}>
-                          {matter.status}
-                        </Badge>
-                      </div>
-                      <p className="truncate text-sm font-medium mt-0.5">
-                        {matter.title}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-3 text-xs text-muted-foreground ml-4">
-                      <span className="flex items-center gap-1">
-                        <FileText className="h-3 w-3" />
-                        {matter._count?.directions ?? 0}
-                      </span>
-                      <ArrowRight className="h-3 w-3 group-hover:text-primary transition-colors" />
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            ) : (
-              <p className="text-sm text-muted-foreground">
-                No matters yet. Create your first matter to begin tracking court directions.
-              </p>
-            )}
-          </CardContent>
-        </Card>
 
-        {/* Upcoming Deadlines */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div>
-              <CardTitle className="text-base">Upcoming Deadlines</CardTitle>
-              <CardDescription>Next events requiring attention</CardDescription>
-            </div>
-            <Link href="/calendar" className="text-xs text-primary hover:underline flex items-center gap-1">
-              Calendar <ArrowRight className="h-3 w-3" />
-            </Link>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <div className="space-y-3">
-                {[1, 2, 3].map((i) => (
-                  <Skeleton key={i} className="h-14 w-full" />
-                ))}
-              </div>
-            ) : data?.upcomingEvents?.length > 0 ? (
-              <div className="space-y-2">
-                {data.upcomingEvents.map((event: any) => {
-                  const eventDate = new Date(event.startDate);
-                  const daysLeft = differenceInDays(eventDate, new Date());
-                  const urgencyColor =
-                    daysLeft <= 1 ? "bg-red-100 text-red-700 border-red-200" :
-                    daysLeft <= 7 ? "bg-amber-100 text-amber-700 border-amber-200" :
-                    "bg-blue-50 text-blue-700 border-blue-200";
-
-                  return (
-                    <Link
-                      key={event.id}
-                      href={`/matters/${event.matter?.id}`}
-                      className="flex items-center gap-3 rounded-lg border p-3 transition-all duration-200 hover:bg-muted/50 hover:shadow-sm group"
-                    >
-                      <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-md text-xs font-bold ${urgencyColor}`}>
-                        {daysLeft <= 0 ? "!" : `${daysLeft}d`}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-medium">{event.title}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {event.matter?.reference} &middot;{" "}
-                          {formatDistanceToNow(eventDate, { addSuffix: true })}
-                        </p>
-                      </div>
-                      <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0 group-hover:text-primary transition-colors" />
-                    </Link>
-                  );
-                })}
-              </div>
-            ) : (
-              <p className="text-sm text-muted-foreground">
-                No upcoming deadlines. Confirm court directions to create calendar events.
-              </p>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Key Dates at Risk */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div>
-              <CardTitle className="text-base">Key Dates</CardTitle>
-              <CardDescription>
-                {kdSummary ? (
-                  <span className="flex items-center gap-2 flex-wrap">
-                    {kdSummary.breached > 0 && <Badge variant="destructive" className="text-[10px]">{kdSummary.breached} Breach</Badge>}
-                    {kdSummary.overdue > 0 && <Badge className="text-[10px] bg-red-100 text-red-700">{kdSummary.overdue} Overdue</Badge>}
-                    {kdSummary.atRisk > 0 && <Badge className="text-[10px] bg-amber-100 text-amber-700">{kdSummary.atRisk} At Risk</Badge>}
-                    {kdSummary.onTrack > 0 && <Badge className="text-[10px] bg-green-100 text-green-700">{kdSummary.onTrack} On Track</Badge>}
-                  </span>
-                ) : "Legal key date tracking"}
-              </CardDescription>
-            </div>
-            <Link href="/key-dates" className="text-xs text-primary hover:underline flex items-center gap-1">
-              View all <ArrowRight className="h-3 w-3" />
-            </Link>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <div className="space-y-3">
-                {[1, 2, 3].map((i) => (
-                  <Skeleton key={i} className="h-14 w-full" />
-                ))}
-              </div>
-            ) : data?.upcomingKeyDates?.length > 0 ? (
-              <div className="space-y-2">
-                {data.upcomingKeyDates.map((kd: any) => {
-                  const dueDate = new Date(kd.dueDate);
-                  const daysLeft = differenceInDays(dueDate, new Date());
-                  const isBreach = kd.status === "BREACH";
-                  const isOverdue = kd.status === "OVERDUE";
-
-                  return (
-                    <Link
-                      key={kd.id}
-                      href={`/matters/${kd.matter?.id}`}
-                      className={`flex items-center gap-3 rounded-lg border p-3 transition-all duration-200 hover:shadow-sm group ${
-                        isBreach ? "border-red-300 bg-red-50/50" :
-                        isOverdue ? "border-red-200 bg-red-50/30" : ""
+          <CardContent className="pt-0">
+            {/* ── Matters Tab ── */}
+            <TabsContent value="matters" className="mt-0 space-y-3">
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none">
+                  <Filter className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                  {["ALL", "ACTIVE", "ON_HOLD", "CLOSED"].map((f) => (
+                    <button
+                      key={f}
+                      onClick={() => setMatterFilter(f)}
+                      className={`px-2.5 py-1 rounded-full text-[11px] font-medium whitespace-nowrap transition-colors ${
+                        matterFilter === f
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-muted text-muted-foreground hover:bg-muted/80"
                       }`}
                     >
-                      <div className="relative">
-                        <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-md text-[10px] font-bold ${KEY_DATE_STATUS_COLORS[kd.status]}`}>
-                          {isBreach ? "48h+" :
-                           isOverdue ? `${Math.abs(daysLeft)}d` :
-                           daysLeft <= 0 ? "!" : `${daysLeft}d`}
+                      {f === "ALL" ? "All" : f === "ON_HOLD" ? "On Hold" : f.charAt(0) + f.slice(1).toLowerCase()}
+                    </button>
+                  ))}
+                </div>
+                <Link href="/matters" className="text-xs text-primary hover:underline flex items-center gap-1 shrink-0">
+                  View all <ArrowRight className="h-3 w-3" />
+                </Link>
+              </div>
+
+              {isLoading ? (
+                <div className="space-y-2">{[1, 2, 3].map((i) => <Skeleton key={i} className="h-14 w-full" />)}</div>
+              ) : (() => {
+                const filtered = (data?.recentMatters || []).filter(
+                  (m: any) => matterFilter === "ALL" || m.status === matterFilter
+                );
+                return filtered.length > 0 ? (
+                  <div className="divide-y rounded-lg border">
+                    {filtered.map((matter: any) => (
+                      <Link
+                        key={matter.id}
+                        href={`/matters/${matter.id}`}
+                        className="flex items-center justify-between p-3 transition-all duration-150 hover:bg-muted/50 group"
+                      >
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-xs font-mono text-muted-foreground">{matter.reference}</span>
+                            <Badge variant="secondary" className={`text-[10px] ${STATUS_COLORS[matter.status] || ""}`}>
+                              {matter.status}
+                            </Badge>
+                          </div>
+                          <p className="truncate text-sm font-medium mt-0.5">{matter.title}</p>
+                          {matter.owner && (
+                            <p className="text-[11px] text-muted-foreground mt-0.5">
+                              {matter.owner.firstName} {matter.owner.lastName}
+                            </p>
+                          )}
                         </div>
-                        {isBreach && (
-                          <span className="absolute -top-1 -right-1 flex h-3 w-3">
-                            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75" />
-                            <span className="relative inline-flex h-3 w-3 rounded-full bg-red-500" />
+                        <div className="flex items-center gap-3 text-xs text-muted-foreground ml-3 shrink-0">
+                          <span className="flex items-center gap-1"><FileText className="h-3 w-3" />{matter._count?.directions ?? 0}</span>
+                          <ArrowRight className="h-3.5 w-3.5 group-hover:text-primary transition-colors" />
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="py-8 text-center">
+                    <Briefcase className="mx-auto h-8 w-8 text-muted-foreground/30" />
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      {matterFilter === "ALL" ? "No matters yet." : `No ${matterFilter.toLowerCase().replace("_", " ")} matters.`}
+                    </p>
+                  </div>
+                );
+              })()}
+            </TabsContent>
+
+            {/* ── Deadlines Tab ── */}
+            <TabsContent value="deadlines" className="mt-0 space-y-3">
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none">
+                  <Filter className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                  {["ALL", "URGENT", "THIS_WEEK", "THIS_MONTH"].map((f) => (
+                    <button
+                      key={f}
+                      onClick={() => setDeadlineFilter(f)}
+                      className={`px-2.5 py-1 rounded-full text-[11px] font-medium whitespace-nowrap transition-colors ${
+                        deadlineFilter === f
+                          ? "bg-blue-600 text-white"
+                          : "bg-muted text-muted-foreground hover:bg-muted/80"
+                      }`}
+                    >
+                      {f === "ALL" ? "All" : f === "URGENT" ? "Urgent (<3d)" : f === "THIS_WEEK" ? "This Week" : "This Month"}
+                    </button>
+                  ))}
+                </div>
+                <Link href="/calendar" className="text-xs text-primary hover:underline flex items-center gap-1 shrink-0">
+                  Calendar <ArrowRight className="h-3 w-3" />
+                </Link>
+              </div>
+
+              {isLoading ? (
+                <div className="space-y-2">{[1, 2, 3].map((i) => <Skeleton key={i} className="h-14 w-full" />)}</div>
+              ) : (() => {
+                const events = (data?.upcomingEvents || []).filter((event: any) => {
+                  if (deadlineFilter === "ALL") return true;
+                  const dl = differenceInDays(new Date(event.startDate), new Date());
+                  if (deadlineFilter === "URGENT") return dl <= 3;
+                  if (deadlineFilter === "THIS_WEEK") return dl <= 7;
+                  return dl <= 30;
+                });
+                return events.length > 0 ? (
+                  <div className="divide-y rounded-lg border">
+                    {events.map((event: any) => {
+                      const eventDate = new Date(event.startDate);
+                      const daysLeft = differenceInDays(eventDate, new Date());
+                      const urgencyColor =
+                        daysLeft <= 1 ? "bg-red-100 text-red-700" :
+                        daysLeft <= 7 ? "bg-amber-100 text-amber-700" :
+                        "bg-blue-50 text-blue-700";
+
+                      return (
+                        <Link
+                          key={event.id}
+                          href={`/matters/${event.matter?.id}`}
+                          className="flex items-center gap-3 p-3 transition-all duration-150 hover:bg-muted/50 group"
+                        >
+                          <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-xs font-bold ${urgencyColor}`}>
+                            {daysLeft <= 0 ? "!" : `${daysLeft}d`}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-sm font-medium">{event.title}</p>
+                            <p className="text-[11px] text-muted-foreground">
+                              {event.matter?.reference} &middot; {format(eventDate, "d MMM yyyy")}
+                            </p>
+                          </div>
+                          <ArrowRight className="h-3.5 w-3.5 text-muted-foreground shrink-0 group-hover:text-primary transition-colors" />
+                        </Link>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="py-8 text-center">
+                    <Calendar className="mx-auto h-8 w-8 text-muted-foreground/30" />
+                    <p className="mt-2 text-sm text-muted-foreground">No deadlines matching this filter.</p>
+                  </div>
+                );
+              })()}
+            </TabsContent>
+
+            {/* ── Key Dates Tab ── */}
+            <TabsContent value="keydates" className="mt-0 space-y-3">
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none">
+                  <Filter className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                  {["ALL", "BREACH", "OVERDUE", "AT_RISK", "ON_TRACK"].map((f) => {
+                    const chipColors: Record<string, string> = {
+                      BREACH: keyDateFilter === "BREACH" ? "bg-red-600 text-white" : "bg-red-50 text-red-700 hover:bg-red-100",
+                      OVERDUE: keyDateFilter === "OVERDUE" ? "bg-red-500 text-white" : "bg-red-50 text-red-600 hover:bg-red-100",
+                      AT_RISK: keyDateFilter === "AT_RISK" ? "bg-amber-500 text-white" : "bg-amber-50 text-amber-700 hover:bg-amber-100",
+                      ON_TRACK: keyDateFilter === "ON_TRACK" ? "bg-green-600 text-white" : "bg-green-50 text-green-700 hover:bg-green-100",
+                    };
+                    return (
+                      <button
+                        key={f}
+                        onClick={() => setKeyDateFilter(f)}
+                        className={`px-2.5 py-1 rounded-full text-[11px] font-medium whitespace-nowrap transition-colors ${
+                          f === "ALL"
+                            ? keyDateFilter === "ALL" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/80"
+                            : chipColors[f]
+                        }`}
+                      >
+                        {f === "ALL" ? "All" : f === "AT_RISK" ? "At Risk" : f === "ON_TRACK" ? "On Track" : f.charAt(0) + f.slice(1).toLowerCase()}
+                        {f !== "ALL" && kdSummary && (
+                          <span className="ml-1 opacity-70">
+                            ({f === "BREACH" ? kdSummary.breached : f === "OVERDUE" ? kdSummary.overdue : f === "AT_RISK" ? kdSummary.atRisk : kdSummary.onTrack})
                           </span>
                         )}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2">
-                          <p className="truncate text-sm font-medium">{kd.title}</p>
-                          <Badge variant="outline" className={`text-[10px] shrink-0 ${KEY_DATE_STATUS_COLORS[kd.status]}`}>
-                            {kd.status.replace("_", " ")}
-                          </Badge>
-                        </div>
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                          {kd.matter?.reference} &middot; {kd.keyDateOwner?.firstName} {kd.keyDateOwner?.lastName}
-                        </p>
-                      </div>
-                      <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0 group-hover:text-primary transition-colors" />
-                    </Link>
-                  );
-                })}
+                      </button>
+                    );
+                  })}
+                </div>
+                <Link href="/key-dates" className="text-xs text-primary hover:underline flex items-center gap-1 shrink-0">
+                  View all <ArrowRight className="h-3 w-3" />
+                </Link>
               </div>
-            ) : (
-              <div className="py-6 text-center">
-                <CalendarCheck className="mx-auto h-8 w-8 text-muted-foreground/50" />
-                <p className="mt-2 text-sm text-muted-foreground">
-                  No key dates. Add key dates to matters to track legal deadlines.
-                </p>
-              </div>
-            )}
+
+              {isLoading ? (
+                <div className="space-y-2">{[1, 2, 3].map((i) => <Skeleton key={i} className="h-14 w-full" />)}</div>
+              ) : (() => {
+                const filtered = (data?.upcomingKeyDates || []).filter(
+                  (kd: any) => keyDateFilter === "ALL" || kd.status === keyDateFilter
+                );
+                return filtered.length > 0 ? (
+                  <div className="divide-y rounded-lg border">
+                    {filtered.map((kd: any) => {
+                      const dueDate = new Date(kd.dueDate);
+                      const daysLeft = differenceInDays(dueDate, new Date());
+                      const isBreach = kd.status === "BREACH";
+                      const isOverdue = kd.status === "OVERDUE";
+
+                      return (
+                        <Link
+                          key={kd.id}
+                          href={`/matters/${kd.matter?.id}`}
+                          className={`flex items-center gap-3 p-3 transition-all duration-150 hover:bg-muted/50 group ${
+                            isBreach ? "bg-red-50/50" : isOverdue ? "bg-red-50/30" : ""
+                          }`}
+                        >
+                          <div className="relative">
+                            <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-[10px] font-bold ${KEY_DATE_STATUS_COLORS[kd.status]}`}>
+                              {isBreach ? "48h+" : isOverdue ? `${Math.abs(daysLeft)}d` : daysLeft <= 0 ? "!" : `${daysLeft}d`}
+                            </div>
+                            {isBreach && (
+                              <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
+                                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75" />
+                                <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-red-500" />
+                              </span>
+                            )}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2">
+                              <p className="truncate text-sm font-medium">{kd.title}</p>
+                              <Badge variant="outline" className={`text-[10px] shrink-0 ${KEY_DATE_STATUS_COLORS[kd.status]}`}>
+                                {kd.status.replace("_", " ")}
+                              </Badge>
+                            </div>
+                            <p className="text-[11px] text-muted-foreground mt-0.5">
+                              {kd.matter?.reference} &middot; {kd.keyDateOwner?.firstName} {kd.keyDateOwner?.lastName} &middot; {format(dueDate, "d MMM")}
+                            </p>
+                          </div>
+                          <ArrowRight className="h-3.5 w-3.5 text-muted-foreground shrink-0 group-hover:text-primary transition-colors" />
+                        </Link>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="py-8 text-center">
+                    <CalendarCheck className="mx-auto h-8 w-8 text-muted-foreground/30" />
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      {keyDateFilter === "ALL" ? "No key dates yet." : `No ${keyDateFilter.toLowerCase().replace("_", " ")} key dates.`}
+                    </p>
+                  </div>
+                );
+              })()}
+            </TabsContent>
           </CardContent>
-        </Card>
-      </div>
+        </Tabs>
+      </Card>
     </div>
   );
 }
