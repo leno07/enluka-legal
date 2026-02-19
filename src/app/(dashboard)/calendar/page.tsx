@@ -216,7 +216,7 @@ export default function CalendarPage() {
 
       {/* === MONTH VIEW === */}
       {viewMode === "month" && (
-        <div className="grid gap-6 lg:grid-cols-3">
+        <div className="grid gap-4 md:gap-6 lg:grid-cols-3">
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="flex items-center gap-2 text-base">
@@ -300,12 +300,12 @@ export default function CalendarPage() {
       {viewMode === "week" && (
         <div className="space-y-4">
           {/* Week navigation */}
-          <div className="flex items-center justify-between">
-            <Button variant="outline" size="sm" onClick={() => setWeekStart(subWeeks(weekStart, 1))}>
-              <ChevronLeft className="mr-1 h-4 w-4" /> Previous
+          <div className="flex items-center justify-between gap-2">
+            <Button variant="outline" size="sm" className="shrink-0" onClick={() => setWeekStart(subWeeks(weekStart, 1))}>
+              <ChevronLeft className="h-4 w-4 sm:mr-1" /> <span className="hidden sm:inline">Previous</span>
             </Button>
-            <div className="text-center">
-              <p className="text-sm font-semibold">
+            <div className="text-center min-w-0">
+              <p className="text-xs sm:text-sm font-semibold truncate">
                 {format(weekStart, "d MMM")} &mdash; {format(weekEnd, "d MMM yyyy")}
               </p>
               <button
@@ -315,13 +315,14 @@ export default function CalendarPage() {
                 Go to this week
               </button>
             </div>
-            <Button variant="outline" size="sm" onClick={() => setWeekStart(addWeeks(weekStart, 1))}>
-              Next <ChevronRight className="ml-1 h-4 w-4" />
+            <Button variant="outline" size="sm" className="shrink-0" onClick={() => setWeekStart(addWeeks(weekStart, 1))}>
+              <span className="hidden sm:inline">Next</span> <ChevronRight className="h-4 w-4 sm:ml-1" />
             </Button>
           </div>
 
-          {/* 7-column grid */}
-          <div className="grid grid-cols-7 gap-2">
+          {/* 7-column grid — horizontally scrollable on mobile */}
+          <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
+            <div className="grid grid-cols-7 gap-2 min-w-[640px] md:min-w-0">
             {weekDays.map((day) => {
               const key = format(day, "yyyy-MM-dd");
               const items = weekEvents[key] || [];
@@ -331,7 +332,7 @@ export default function CalendarPage() {
               return (
                 <div
                   key={key}
-                  className={`min-h-[160px] rounded-lg border p-2 transition-colors ${
+                  className={`min-h-[140px] md:min-h-[160px] rounded-lg border p-1.5 md:p-2 transition-colors ${
                     isCurrentDay
                       ? "border-primary bg-primary/5"
                       : isPastDay
@@ -339,11 +340,11 @@ export default function CalendarPage() {
                       : "hover:bg-muted/20"
                   }`}
                 >
-                  <div className="mb-2 flex items-center justify-between">
-                    <span className={`text-xs font-medium ${isCurrentDay ? "text-primary" : "text-muted-foreground"}`}>
+                  <div className="mb-1.5 md:mb-2 flex items-center justify-between">
+                    <span className={`text-[10px] md:text-xs font-medium ${isCurrentDay ? "text-primary" : "text-muted-foreground"}`}>
                       {format(day, "EEE")}
                     </span>
-                    <span className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold ${
+                    <span className={`flex h-5 w-5 md:h-6 md:w-6 items-center justify-center rounded-full text-[10px] md:text-xs font-bold ${
                       isCurrentDay ? "bg-primary text-primary-foreground" : ""
                     }`}>
                       {format(day, "d")}
@@ -409,9 +410,10 @@ export default function CalendarPage() {
               );
             })}
           </div>
+          </div>
 
           {/* Legend */}
-          <div className="flex items-center gap-4 text-[10px] text-muted-foreground justify-center">
+          <div className="flex items-center gap-4 text-[10px] text-muted-foreground justify-center flex-wrap">
             <span className="flex items-center gap-1">
               <div className="h-2.5 w-2.5 rounded border border-blue-200 bg-blue-50" /> Calendar Event
             </span>

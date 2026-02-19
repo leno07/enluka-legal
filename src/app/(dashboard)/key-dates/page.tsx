@@ -124,7 +124,7 @@ export default function KeyDatesPage() {
           />
         </div>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-40">
+          <SelectTrigger className="w-full sm:w-40">
             <SelectValue placeholder="All statuses" />
           </SelectTrigger>
           <SelectContent>
@@ -165,11 +165,11 @@ export default function KeyDatesPage() {
               <Link
                 key={kd.id}
                 href={`/matters/${kd.matter?.id}`}
-                className={`block rounded-lg border border-l-4 ${isCompleted ? "border-l-gray-300 opacity-60" : STATUS_BORDER[kd.status]} p-4 transition-all duration-200 hover:shadow-sm hover:bg-muted/30 ${
+                className={`block rounded-lg border border-l-4 ${isCompleted ? "border-l-gray-300 opacity-60" : STATUS_BORDER[kd.status]} p-3 sm:p-4 transition-all duration-200 hover:shadow-sm hover:bg-muted/30 ${
                   isBreach ? "bg-red-50/30" : ""
                 }`}
               >
-                <div className="flex items-start justify-between gap-4">
+                <div className="flex items-start justify-between gap-2 sm:gap-4">
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 flex-wrap">
                       <h3 className={`text-sm font-semibold ${isCompleted ? "line-through" : ""}`}>{kd.title}</h3>
@@ -178,12 +178,12 @@ export default function KeyDatesPage() {
                         {isCompleted ? "COMPLETED" : kd.status.replace("_", " ")}
                       </Badge>
                     </div>
-                    <p className="mt-1 text-xs text-muted-foreground">
+                    <p className="mt-1 text-xs text-muted-foreground truncate">
                       <span className="font-mono">{kd.matter?.reference}</span> &middot; {kd.matter?.title}
                     </p>
-                    <div className="mt-2 flex items-center gap-4 text-xs">
+                    <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
                       <span className="flex items-center gap-1 text-muted-foreground">
-                        <Clock className="h-3 w-3" />
+                        <Clock className="h-3 w-3 shrink-0" />
                         {format(dueDate, "d MMM yyyy")}
                       </span>
                       {!isCompleted && (
@@ -193,19 +193,19 @@ export default function KeyDatesPage() {
                           kd.status === "AT_RISK" ? "text-amber-600 font-medium" :
                           "text-green-600"
                         }>
-                          {isBreach ? `BREACH - ${Math.floor(hoursOverdue)}h overdue` :
+                          {isBreach ? `BREACH - ${Math.floor(hoursOverdue)}h` :
                            daysLeft < 0 ? `${Math.abs(daysLeft)}d overdue` :
                            daysLeft === 0 ? "Due today" :
                            `${daysLeft}d remaining`}
                         </span>
                       )}
-                      <div className="flex items-center gap-2">
-                        <Avatar className="h-5 w-5">
-                          <AvatarFallback className="text-[8px] bg-primary/10 text-primary">
+                      <div className="flex items-center gap-1.5">
+                        <Avatar className="h-4 w-4 sm:h-5 sm:w-5">
+                          <AvatarFallback className="text-[7px] sm:text-[8px] bg-primary/10 text-primary">
                             {kd.keyDateOwner?.firstName?.[0]}{kd.keyDateOwner?.lastName?.[0]}
                           </AvatarFallback>
                         </Avatar>
-                        <span className="text-muted-foreground">
+                        <span className="text-muted-foreground truncate max-w-[120px] sm:max-w-none">
                           {kd.keyDateOwner?.firstName} {kd.keyDateOwner?.lastName}
                         </span>
                       </div>

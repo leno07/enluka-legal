@@ -217,8 +217,8 @@ export default function MatterWorkspacePage({
 
       {/* Tabs */}
       <Tabs defaultValue="overview" className="space-y-4">
-        <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
-          <TabsList className="inline-flex w-auto min-w-full sm:min-w-0">
+        <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0 scrollbar-none">
+          <TabsList className="inline-flex w-auto min-w-max">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="directions">
               Directions ({directions?.length ?? matter._count.directions})
@@ -256,11 +256,11 @@ export default function MatterWorkspacePage({
                 <CardTitle className="text-base">Case Details</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2.5 text-sm">
-                <div className="flex justify-between"><span className="text-muted-foreground">Reference</span><span className="font-mono">{matter.reference}</span></div>
-                <div className="flex justify-between"><span className="text-muted-foreground">Client</span><span>{matter.clientName}</span></div>
-                {matter.caseNumber && <div className="flex justify-between"><span className="text-muted-foreground">Case number</span><span>{matter.caseNumber}</span></div>}
-                {matter.court && <div className="flex justify-between"><span className="text-muted-foreground">Court</span><span>{matter.court}</span></div>}
-                {matter.judge && <div className="flex justify-between"><span className="text-muted-foreground">Judge</span><span>{matter.judge}</span></div>}
+                <div className="flex justify-between gap-2"><span className="text-muted-foreground shrink-0">Reference</span><span className="font-mono text-right truncate">{matter.reference}</span></div>
+                <div className="flex justify-between gap-2"><span className="text-muted-foreground shrink-0">Client</span><span className="text-right truncate">{matter.clientName}</span></div>
+                {matter.caseNumber && <div className="flex justify-between gap-2"><span className="text-muted-foreground shrink-0">Case number</span><span className="text-right truncate">{matter.caseNumber}</span></div>}
+                {matter.court && <div className="flex justify-between gap-2"><span className="text-muted-foreground shrink-0">Court</span><span className="text-right truncate">{matter.court}</span></div>}
+                {matter.judge && <div className="flex justify-between gap-2"><span className="text-muted-foreground shrink-0">Judge</span><span className="text-right truncate">{matter.judge}</span></div>}
                 {matter.description && (
                   <div className="pt-2 border-t">
                     <span className="text-muted-foreground text-xs">Description</span>
@@ -382,7 +382,7 @@ export default function MatterWorkspacePage({
                 const daysLeft = dueDate ? differenceInDays(dueDate, new Date()) : null;
                 return (
                   <div key={d.id} className={`rounded-lg border border-l-4 ${DIR_STATUS_BORDER[d.status] || "border-l-gray-300"} p-3`}>
-                    <div className="flex items-start justify-between gap-2">
+                    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2">
                       <div className="min-w-0">
                         <p className="text-sm font-medium">
                           <span className="text-muted-foreground mr-1">{d.orderNumber}.</span>

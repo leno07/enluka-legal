@@ -236,8 +236,8 @@ export function MatterKeyDates({ matterId, matter }: MatterKeyDatesProps) {
                 key={kd.id}
                 className={`border-l-4 ${isCompleted ? "border-l-gray-300 opacity-60" : STATUS_COLORS[kd.status] || "border-l-gray-300"} transition-all duration-200 hover:shadow-sm`}
               >
-                <CardContent className="p-4">
-                  <div className="flex items-start justify-between gap-3">
+                <CardContent className="p-3 sm:p-4">
+                  <div className="flex items-start justify-between gap-2 sm:gap-3">
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2 flex-wrap">
                         <h4 className={`text-sm font-semibold ${isCompleted ? "line-through" : ""}`}>{kd.title}</h4>
@@ -304,21 +304,23 @@ export function MatterKeyDates({ matterId, matter }: MatterKeyDatesProps) {
                       <Button
                         size="sm"
                         variant="outline"
-                        className="shrink-0 h-8 text-xs"
+                        className="shrink-0 h-7 sm:h-8 text-xs"
                         onClick={() => completeMutation.mutate(kd.id)}
                       >
-                        <CheckCircle className="mr-1 h-3 w-3" /> Complete
+                        <CheckCircle className="h-3 w-3 sm:mr-1" /> <span className="hidden sm:inline">Complete</span>
                       </Button>
                     )}
                   </div>
 
                   {!isCompleted && activeTierIndex >= 0 && (
-                    <div className="mt-2 pt-2 border-t text-[10px] text-muted-foreground">
+                    <div className="mt-2 pt-2 border-t text-[10px] text-muted-foreground leading-relaxed">
                       <span className="font-medium">Escalation: </span>
-                      {activeTierIndex >= 0 && <span>Key Date Owner</span>}
-                      {activeTierIndex >= 1 && <span> → Matter Manager{matter?.matterManager ? ` (${matter.matterManager.firstName})` : ""}</span>}
-                      {activeTierIndex >= 2 && <span> → Matter Partner{matter?.matterPartner ? ` (${matter.matterPartner.firstName})` : ""}</span>}
-                      {activeTierIndex >= 3 && <span> → Client Partner{matter?.clientPartner ? ` (${matter.clientPartner.firstName})` : ""}</span>}
+                      <span className="inline-flex flex-wrap gap-x-0.5">
+                        {activeTierIndex >= 0 && <span>Owner</span>}
+                        {activeTierIndex >= 1 && <span> → Manager{matter?.matterManager ? ` (${matter.matterManager.firstName})` : ""}</span>}
+                        {activeTierIndex >= 2 && <span> → Partner{matter?.matterPartner ? ` (${matter.matterPartner.firstName})` : ""}</span>}
+                        {activeTierIndex >= 3 && <span> → Client{matter?.clientPartner ? ` (${matter.clientPartner.firstName})` : ""}</span>}
+                      </span>
                     </div>
                   )}
                 </CardContent>

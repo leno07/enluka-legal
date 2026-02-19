@@ -65,56 +65,56 @@ export default function DashboardPage() {
       </div>
 
       {/* Metric cards — 5 cards */}
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-5">
+      <div className="grid grid-cols-2 gap-2 sm:gap-3 md:gap-4 lg:grid-cols-5">
         <Card className="border-l-4 border-l-primary">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Matters</CardTitle>
-            <Briefcase className="h-4 w-4 text-primary" />
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 sm:pb-2 px-3 sm:px-6 pt-3 sm:pt-6">
+            <CardTitle className="text-xs sm:text-sm font-medium">Active Matters</CardTitle>
+            <Briefcase className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary shrink-0" />
           </CardHeader>
-          <CardContent>
+          <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
             {isLoading ? (
               <Skeleton className="h-8 w-12" />
             ) : (
               <>
-                <div className="text-3xl font-bold">{data?.activeMatters ?? 0}</div>
-                <p className="text-xs text-muted-foreground mt-1">Open cases</p>
+                <div className="text-2xl sm:text-3xl font-bold">{data?.activeMatters ?? 0}</div>
+                <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">Open cases</p>
               </>
             )}
           </CardContent>
         </Card>
 
         <Card className="border-l-4 border-l-blue-500">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Upcoming Deadlines</CardTitle>
-            <Calendar className="h-4 w-4 text-blue-500" />
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 sm:pb-2 px-3 sm:px-6 pt-3 sm:pt-6">
+            <CardTitle className="text-xs sm:text-sm font-medium leading-tight">Deadlines</CardTitle>
+            <Calendar className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-blue-500 shrink-0" />
           </CardHeader>
-          <CardContent>
+          <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
             {isLoading ? (
               <Skeleton className="h-8 w-12" />
             ) : (
               <>
-                <div className="text-3xl font-bold">{data?.upcomingDeadlines ?? 0}</div>
-                <p className="text-xs text-muted-foreground mt-1">Next 30 days</p>
+                <div className="text-2xl sm:text-3xl font-bold">{data?.upcomingDeadlines ?? 0}</div>
+                <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">Next 30 days</p>
               </>
             )}
           </CardContent>
         </Card>
 
         <Card className="border-l-4 border-l-red-500">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Overdue</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-red-500" />
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 sm:pb-2 px-3 sm:px-6 pt-3 sm:pt-6">
+            <CardTitle className="text-xs sm:text-sm font-medium">Overdue</CardTitle>
+            <AlertTriangle className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-red-500 shrink-0" />
           </CardHeader>
-          <CardContent>
+          <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
             {isLoading ? (
               <Skeleton className="h-8 w-12" />
             ) : (
               <>
-                <div className={`text-3xl font-bold ${(data?.overdueCount ?? 0) > 0 ? "text-red-600" : "text-green-600"}`}>
+                <div className={`text-2xl sm:text-3xl font-bold ${(data?.overdueCount ?? 0) > 0 ? "text-red-600" : "text-green-600"}`}>
                   {data?.overdueCount ?? 0}
                 </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {(data?.overdueCount ?? 0) > 0 ? "Require immediate action" : "All deadlines on track"}
+                <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">
+                  {(data?.overdueCount ?? 0) > 0 ? "Action needed" : "On track"}
                 </p>
               </>
             )}
@@ -122,36 +122,36 @@ export default function DashboardPage() {
         </Card>
 
         <Card className="border-l-4 border-l-emerald-500">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Completed This Week</CardTitle>
-            <CheckCircle className="h-4 w-4 text-emerald-500" />
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 sm:pb-2 px-3 sm:px-6 pt-3 sm:pt-6">
+            <CardTitle className="text-xs sm:text-sm font-medium leading-tight">Completed</CardTitle>
+            <CheckCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-emerald-500 shrink-0" />
           </CardHeader>
-          <CardContent>
+          <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
             {isLoading ? (
               <Skeleton className="h-8 w-12" />
             ) : (
               <>
-                <div className="text-3xl font-bold">{data?.completedThisWeek ?? 0}</div>
-                <p className="text-xs text-muted-foreground mt-1">Directions confirmed</p>
+                <div className="text-2xl sm:text-3xl font-bold">{data?.completedThisWeek ?? 0}</div>
+                <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">This week</p>
               </>
             )}
           </CardContent>
         </Card>
 
-        <Card className={`border-l-4 ${kdUrgentTotal > 0 ? "border-l-red-500" : "border-l-teal-500"}`}>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Key Dates</CardTitle>
-            <CalendarCheck className={`h-4 w-4 ${kdUrgentTotal > 0 ? "text-red-500" : "text-teal-500"}`} />
+        <Card className={`border-l-4 col-span-2 lg:col-span-1 ${kdUrgentTotal > 0 ? "border-l-red-500" : "border-l-teal-500"}`}>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 sm:pb-2 px-3 sm:px-6 pt-3 sm:pt-6">
+            <CardTitle className="text-xs sm:text-sm font-medium">Key Dates</CardTitle>
+            <CalendarCheck className={`h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0 ${kdUrgentTotal > 0 ? "text-red-500" : "text-teal-500"}`} />
           </CardHeader>
-          <CardContent>
+          <CardContent className="px-3 sm:px-6 pb-3 sm:pb-6">
             {isLoading ? (
               <Skeleton className="h-8 w-12" />
             ) : (
               <>
-                <div className={`text-3xl font-bold ${kdUrgentTotal > 0 ? "text-red-600" : ""}`}>
+                <div className={`text-2xl sm:text-3xl font-bold ${kdUrgentTotal > 0 ? "text-red-600" : ""}`}>
                   {kdSummary?.total ?? 0}
                 </div>
-                <p className="text-xs text-muted-foreground mt-1">
+                <p className="text-[10px] sm:text-xs text-muted-foreground mt-1">
                   {kdUrgentTotal > 0
                     ? `${kdUrgentTotal} need attention`
                     : kdSummary?.atRisk
@@ -165,7 +165,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Bottom sections — 3 columns */}
-      <div className="grid gap-6 lg:grid-cols-3">
+      <div className="grid gap-4 md:gap-6 lg:grid-cols-3">
         {/* Recent Matters */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">

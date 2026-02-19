@@ -58,13 +58,13 @@ export default function FirmSettingsPage() {
       </div>
 
       {isLoading ? (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
           {[1, 2, 3, 4].map((i) => (
-            <Skeleton key={i} className="h-44" />
+            <Skeleton key={i} className="h-36 sm:h-44" />
           ))}
         </div>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
           {members?.map((member: any) => {
             const initials = `${member.firstName[0]}${member.lastName[0]}`.toUpperCase();
             return (
@@ -72,10 +72,10 @@ export default function FirmSettingsPage() {
                 key={member.id}
                 className="transition-all duration-200 hover:shadow-md hover:-translate-y-0.5"
               >
-                <CardContent className="p-5">
-                  <div className="flex items-start gap-4">
-                    <Avatar className="h-12 w-12 shrink-0">
-                      <AvatarFallback className={`text-sm font-bold text-white ${AVATAR_COLORS[member.role] || "bg-gray-500"}`}>
+                <CardContent className="p-3 sm:p-5">
+                  <div className="flex items-start gap-3 sm:gap-4">
+                    <Avatar className="h-10 w-10 sm:h-12 sm:w-12 shrink-0">
+                      <AvatarFallback className={`text-xs sm:text-sm font-bold text-white ${AVATAR_COLORS[member.role] || "bg-gray-500"}`}>
                         {initials}
                       </AvatarFallback>
                     </Avatar>
@@ -91,22 +91,22 @@ export default function FirmSettingsPage() {
                         )}
                       </div>
                       <div className="flex items-center gap-1.5 mt-1 text-xs text-muted-foreground">
-                        <Mail className="h-3 w-3" />
+                        <Mail className="h-3 w-3 shrink-0" />
                         <span className="truncate">{member.email}</span>
                       </div>
                     </div>
                   </div>
 
-                  <div className="mt-4 flex items-center justify-between">
+                  <div className="mt-3 sm:mt-4 flex items-center justify-between gap-2">
                     <Badge
                       variant="outline"
-                      className={`text-[10px] ${ROLE_COLORS[member.role] || ""}`}
+                      className={`text-[10px] shrink-0 ${ROLE_COLORS[member.role] || ""}`}
                     >
                       {ROLE_LABELS[member.role as Role] || member.role}
                     </Badge>
                     {member.supervisor && (
-                      <span className="text-[10px] text-muted-foreground">
-                        Reports to {member.supervisor.firstName} {member.supervisor.lastName}
+                      <span className="text-[10px] text-muted-foreground truncate">
+                        Reports to {member.supervisor.firstName}
                       </span>
                     )}
                   </div>
