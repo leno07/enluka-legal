@@ -25,9 +25,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { CalendarCheck, Plus, Clock, CheckCircle } from "lucide-react";
+import { CalendarCheck, Plus, Clock, CheckCircle, Mail, CalendarPlus, ExternalLink } from "lucide-react";
 import { format, differenceInDays, differenceInHours } from "date-fns";
 import { toast } from "sonner";
+import { downloadICS, getGoogleCalendarUrl, getMailtoUrl } from "@/lib/calendar-export";
 
 const STATUS_COLORS: Record<string, string> = {
   BREACH: "border-l-red-600",
@@ -300,16 +301,49 @@ export function MatterKeyDates({ matterId, matter }: MatterKeyDatesProps) {
                       )}
                     </div>
 
-                    {!isCompleted && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="shrink-0 h-7 sm:h-8 text-xs"
-                        onClick={() => completeMutation.mutate(kd.id)}
+                    <div className="flex items-center gap-1 shrink-0">
+                      {/* Email owner */}
+                      {kd.keyDateOwner?.email && (
+                        <a
+                          href={getMailtoUrl({ ...kd, matter })}
+                          title={`Email ${kd.keyDateOwner.firstName} ${kd.keyDateOwner.lastName}`}
+                          className="inline-flex h-7 w-7 items-center justify-center rounded-md border text-muted-foreground hover:text-primary hover:bg-muted transition-colors"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <Mail className="h-3.5 w-3.5" />
+                        </a>
+                      )}
+                      {/* Download ICS */}
+                      <button
+                        onClick={() => downloadICS({ ...kd, matter })}
+                        title="Download .ics (Outlook / Apple Calendar)"
+                        className="inline-flex h-7 w-7 items-center justify-center rounded-md border text-muted-foreground hover:text-blue-600 hover:bg-muted transition-colors"
                       >
-                        <CheckCircle className="h-3 w-3 sm:mr-1" /> <span className="hidden sm:inline">Complete</span>
-                      </Button>
-                    )}
+                        <CalendarPlus className="h-3.5 w-3.5" />
+                      </button>
+                      {/* Google Calendar */}
+                      <a
+                        href={getGoogleCalendarUrl({ ...kd, matter })}
+                        target="_blank"
+                        rel="noreferrer"
+                        title="Add to Google Calendar"
+                        className="inline-flex h-7 w-7 items-center justify-center rounded-md border text-muted-foreground hover:text-green-600 hover:bg-muted transition-colors"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <ExternalLink className="h-3 w-3" />
+                      </a>
+                      {/* Complete */}
+                      {!isCompleted && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="shrink-0 h-7 sm:h-8 text-xs"
+                          onClick={() => completeMutation.mutate(kd.id)}
+                        >
+                          <CheckCircle className="h-3 w-3 sm:mr-1" /> <span className="hidden sm:inline">Complete</span>
+                        </Button>
+                      )}
+                    </div>
                   </div>
 
                   {!isCompleted && activeTierIndex >= 0 && (

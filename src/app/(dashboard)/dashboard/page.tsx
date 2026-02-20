@@ -43,7 +43,10 @@ import {
   Users,
   Target,
   Filter,
+  Mail,
+  CalendarPlus,
 } from "lucide-react";
+import { downloadICS, getGoogleCalendarUrl, getMailtoUrl } from "@/lib/calendar-export";
 import { formatDistanceToNow, differenceInDays, differenceInHours, format } from "date-fns";
 
 const STATUS_COLORS: Record<string, string> = {
@@ -480,41 +483,63 @@ export default function DashboardPage() {
               const isOverdue = kd.status === "OVERDUE";
 
               return (
-                <Link
+                <div
                   key={kd.id}
-                  href={`/matters/${kd.matter?.id}`}
-                  onClick={() => setActivePanel(null)}
-                  className={`flex items-center gap-3 rounded-lg border p-3 transition-all duration-200 hover:shadow-sm group ${
+                  className={`flex items-center rounded-lg border ${
                     isBreach ? "border-red-300 bg-red-50/50" :
                     isOverdue ? "border-red-200 bg-red-50/30" : ""
                   }`}
                 >
-                  <div className="relative">
-                    <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-md text-[10px] font-bold ${KEY_DATE_STATUS_COLORS[kd.status]}`}>
-                      {isBreach ? "48h+" :
-                       isOverdue ? `${Math.abs(daysLeft)}d` :
-                       daysLeft <= 0 ? "!" : `${daysLeft}d`}
+                  <Link
+                    href={`/matters/${kd.matter?.id}`}
+                    onClick={() => setActivePanel(null)}
+                    className="flex flex-1 min-w-0 items-center gap-3 p-3 transition-colors hover:bg-muted/30 group"
+                  >
+                    <div className="relative shrink-0">
+                      <div className={`flex h-10 w-10 items-center justify-center rounded-md text-[10px] font-bold ${KEY_DATE_STATUS_COLORS[kd.status]}`}>
+                        {isBreach ? "48h+" :
+                         isOverdue ? `${Math.abs(daysLeft)}d` :
+                         daysLeft <= 0 ? "!" : `${daysLeft}d`}
+                      </div>
+                      {isBreach && (
+                        <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75" />
+                          <span className="relative inline-flex h-3 w-3 rounded-full bg-red-500" />
+                        </span>
+                      )}
                     </div>
-                    {isBreach && (
-                      <span className="absolute -top-1 -right-1 flex h-3 w-3">
-                        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75" />
-                        <span className="relative inline-flex h-3 w-3 rounded-full bg-red-500" />
-                      </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <p className="truncate text-sm font-medium">{kd.title}</p>
+                        <Badge variant="outline" className={`text-[10px] shrink-0 ${KEY_DATE_STATUS_COLORS[kd.status]}`}>
+                          {kd.status.replace("_", " ")}
+                        </Badge>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        {kd.matter?.reference} &middot; {kd.keyDateOwner?.firstName} {kd.keyDateOwner?.lastName}
+                      </p>
+                    </div>
+                    <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0 group-hover:text-primary transition-colors" />
+                  </Link>
+                  <div className="flex items-center gap-0.5 pr-2 shrink-0">
+                    {kd.keyDateOwner?.email && (
+                      <a
+                        href={getMailtoUrl(kd)}
+                        title={`Email ${kd.keyDateOwner.firstName}`}
+                        className="p-1.5 rounded-md text-muted-foreground hover:text-primary hover:bg-muted transition-colors"
+                      >
+                        <Mail className="h-3.5 w-3.5" />
+                      </a>
                     )}
+                    <button
+                      onClick={() => downloadICS(kd)}
+                      title="Download .ics"
+                      className="p-1.5 rounded-md text-muted-foreground hover:text-blue-600 hover:bg-muted transition-colors"
+                    >
+                      <CalendarPlus className="h-3.5 w-3.5" />
+                    </button>
                   </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <p className="truncate text-sm font-medium">{kd.title}</p>
-                      <Badge variant="outline" className={`text-[10px] shrink-0 ${KEY_DATE_STATUS_COLORS[kd.status]}`}>
-                        {kd.status.replace("_", " ")}
-                      </Badge>
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      {kd.matter?.reference} &middot; {kd.keyDateOwner?.firstName} {kd.keyDateOwner?.lastName}
-                    </p>
-                  </div>
-                  <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0 group-hover:text-primary transition-colors" />
-                </Link>
+                </div>
               );
             })}
             {(data?.upcomingKeyDates || []).length === 0 && (
@@ -751,37 +776,59 @@ export default function DashboardPage() {
                       const isOverdue = kd.status === "OVERDUE";
 
                       return (
-                        <Link
+                        <div
                           key={kd.id}
-                          href={`/matters/${kd.matter?.id}`}
-                          className={`flex items-center gap-3 p-3 transition-all duration-150 hover:bg-muted/50 group ${
-                            isBreach ? "bg-red-50/50" : isOverdue ? "bg-red-50/30" : ""
-                          }`}
+                          className={`flex items-center ${isBreach ? "bg-red-50/50" : isOverdue ? "bg-red-50/30" : ""}`}
                         >
-                          <div className="relative">
-                            <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-[10px] font-bold ${KEY_DATE_STATUS_COLORS[kd.status]}`}>
-                              {isBreach ? "48h+" : isOverdue ? `${Math.abs(daysLeft)}d` : daysLeft <= 0 ? "!" : `${daysLeft}d`}
+                          {/* Main link area */}
+                          <Link
+                            href={`/matters/${kd.matter?.id}`}
+                            className="flex flex-1 min-w-0 items-center gap-3 p-3 transition-colors hover:bg-muted/50 group"
+                          >
+                            <div className="relative shrink-0">
+                              <div className={`flex h-9 w-9 items-center justify-center rounded-md text-[10px] font-bold ${KEY_DATE_STATUS_COLORS[kd.status]}`}>
+                                {isBreach ? "48h+" : isOverdue ? `${Math.abs(daysLeft)}d` : daysLeft <= 0 ? "!" : `${daysLeft}d`}
+                              </div>
+                              {isBreach && (
+                                <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
+                                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75" />
+                                  <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-red-500" />
+                                </span>
+                              )}
                             </div>
-                            {isBreach && (
-                              <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
-                                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75" />
-                                <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-red-500" />
-                              </span>
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center gap-2">
+                                <p className="truncate text-sm font-medium">{kd.title}</p>
+                                <Badge variant="outline" className={`text-[10px] shrink-0 ${KEY_DATE_STATUS_COLORS[kd.status]}`}>
+                                  {kd.status.replace("_", " ")}
+                                </Badge>
+                              </div>
+                              <p className="text-[11px] text-muted-foreground mt-0.5">
+                                {kd.matter?.reference} &middot; {kd.keyDateOwner?.firstName} {kd.keyDateOwner?.lastName} &middot; {format(dueDate, "d MMM")}
+                              </p>
+                            </div>
+                            <ArrowRight className="h-3.5 w-3.5 text-muted-foreground shrink-0 group-hover:text-primary transition-colors" />
+                          </Link>
+                          {/* Action buttons */}
+                          <div className="flex items-center gap-0.5 pr-2 shrink-0">
+                            {kd.keyDateOwner?.email && (
+                              <a
+                                href={getMailtoUrl(kd)}
+                                title={`Email ${kd.keyDateOwner.firstName}`}
+                                className="p-1.5 rounded-md text-muted-foreground hover:text-primary hover:bg-muted transition-colors"
+                              >
+                                <Mail className="h-3.5 w-3.5" />
+                              </a>
                             )}
+                            <button
+                              onClick={() => downloadICS(kd)}
+                              title="Download .ics"
+                              className="p-1.5 rounded-md text-muted-foreground hover:text-blue-600 hover:bg-muted transition-colors"
+                            >
+                              <CalendarPlus className="h-3.5 w-3.5" />
+                            </button>
                           </div>
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-2">
-                              <p className="truncate text-sm font-medium">{kd.title}</p>
-                              <Badge variant="outline" className={`text-[10px] shrink-0 ${KEY_DATE_STATUS_COLORS[kd.status]}`}>
-                                {kd.status.replace("_", " ")}
-                              </Badge>
-                            </div>
-                            <p className="text-[11px] text-muted-foreground mt-0.5">
-                              {kd.matter?.reference} &middot; {kd.keyDateOwner?.firstName} {kd.keyDateOwner?.lastName} &middot; {format(dueDate, "d MMM")}
-                            </p>
-                          </div>
-                          <ArrowRight className="h-3.5 w-3.5 text-muted-foreground shrink-0 group-hover:text-primary transition-colors" />
-                        </Link>
+                        </div>
                       );
                     })}
                   </div>

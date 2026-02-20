@@ -22,8 +22,9 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { CalendarCheck, Search, Clock, AlertTriangle } from "lucide-react";
+import { CalendarCheck, Search, Clock, AlertTriangle, Mail, CalendarPlus, ExternalLink } from "lucide-react";
 import { format, differenceInDays, differenceInHours } from "date-fns";
+import { downloadICS, getGoogleCalendarUrl, getMailtoUrl } from "@/lib/calendar-export";
 
 const STATUS_BADGE_COLORS: Record<string, string> = {
   BREACH: "bg-red-100 text-red-800 border-red-200",
@@ -162,84 +163,120 @@ export default function KeyDatesPage() {
             }
 
             return (
-              <Link
+              <div
                 key={kd.id}
-                href={`/matters/${kd.matter?.id}`}
-                className={`block rounded-lg border border-l-4 ${isCompleted ? "border-l-gray-300 opacity-60" : STATUS_BORDER[kd.status]} p-3 sm:p-4 transition-all duration-200 hover:shadow-sm hover:bg-muted/30 ${
+                className={`flex rounded-lg border border-l-4 ${isCompleted ? "border-l-gray-300 opacity-60" : STATUS_BORDER[kd.status]} overflow-hidden transition-all duration-200 hover:shadow-sm ${
                   isBreach ? "bg-red-50/30" : ""
                 }`}
               >
-                <div className="flex items-start justify-between gap-2 sm:gap-4">
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <h3 className={`text-sm font-semibold ${isCompleted ? "line-through" : ""}`}>{kd.title}</h3>
-                      {kd.priority === "HIGH" && <Badge variant="destructive" className="text-[10px]">HIGH</Badge>}
-                      <Badge variant="outline" className={`text-[10px] ${isCompleted ? "" : STATUS_BADGE_COLORS[kd.status]}`}>
-                        {isCompleted ? "COMPLETED" : kd.status.replace("_", " ")}
-                      </Badge>
-                    </div>
-                    <p className="mt-1 text-xs text-muted-foreground truncate">
-                      <span className="font-mono">{kd.matter?.reference}</span> &middot; {kd.matter?.title}
-                    </p>
-                    <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
-                      <span className="flex items-center gap-1 text-muted-foreground">
-                        <Clock className="h-3 w-3 shrink-0" />
-                        {format(dueDate, "d MMM yyyy")}
-                      </span>
-                      {!isCompleted && (
-                        <span className={
-                          isBreach ? "text-red-700 font-bold" :
-                          kd.status === "OVERDUE" ? "text-red-600 font-medium" :
-                          kd.status === "AT_RISK" ? "text-amber-600 font-medium" :
-                          "text-green-600"
-                        }>
-                          {isBreach ? `BREACH - ${Math.floor(hoursOverdue)}h` :
-                           daysLeft < 0 ? `${Math.abs(daysLeft)}d overdue` :
-                           daysLeft === 0 ? "Due today" :
-                           `${daysLeft}d remaining`}
-                        </span>
-                      )}
-                      <div className="flex items-center gap-1.5">
-                        <Avatar className="h-4 w-4 sm:h-5 sm:w-5">
-                          <AvatarFallback className="text-[7px] sm:text-[8px] bg-primary/10 text-primary">
-                            {kd.keyDateOwner?.firstName?.[0]}{kd.keyDateOwner?.lastName?.[0]}
-                          </AvatarFallback>
-                        </Avatar>
-                        <span className="text-muted-foreground truncate max-w-[120px] sm:max-w-none">
-                          {kd.keyDateOwner?.firstName} {kd.keyDateOwner?.lastName}
-                        </span>
+                {/* Main clickable area */}
+                <Link
+                  href={`/matters/${kd.matter?.id}`}
+                  className="min-w-0 flex-1 p-3 sm:p-4 hover:bg-muted/30 transition-colors"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h3 className={`text-sm font-semibold ${isCompleted ? "line-through" : ""}`}>{kd.title}</h3>
+                        {kd.priority === "HIGH" && <Badge variant="destructive" className="text-[10px]">HIGH</Badge>}
+                        <Badge variant="outline" className={`text-[10px] ${isCompleted ? "" : STATUS_BADGE_COLORS[kd.status]}`}>
+                          {isCompleted ? "COMPLETED" : kd.status.replace("_", " ")}
+                        </Badge>
                       </div>
+                      <p className="mt-1 text-xs text-muted-foreground truncate">
+                        <span className="font-mono">{kd.matter?.reference}</span> &middot; {kd.matter?.title}
+                      </p>
+                      <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
+                        <span className="flex items-center gap-1 text-muted-foreground">
+                          <Clock className="h-3 w-3 shrink-0" />
+                          {format(dueDate, "d MMM yyyy")}
+                        </span>
+                        {!isCompleted && (
+                          <span className={
+                            isBreach ? "text-red-700 font-bold" :
+                            kd.status === "OVERDUE" ? "text-red-600 font-medium" :
+                            kd.status === "AT_RISK" ? "text-amber-600 font-medium" :
+                            "text-green-600"
+                          }>
+                            {isBreach ? `BREACH - ${Math.floor(hoursOverdue)}h` :
+                             daysLeft < 0 ? `${Math.abs(daysLeft)}d overdue` :
+                             daysLeft === 0 ? "Due today" :
+                             `${daysLeft}d remaining`}
+                          </span>
+                        )}
+                        <div className="flex items-center gap-1.5">
+                          <Avatar className="h-4 w-4 sm:h-5 sm:w-5">
+                            <AvatarFallback className="text-[7px] sm:text-[8px] bg-primary/10 text-primary">
+                              {kd.keyDateOwner?.firstName?.[0]}{kd.keyDateOwner?.lastName?.[0]}
+                            </AvatarFallback>
+                          </Avatar>
+                          <span className="text-muted-foreground truncate max-w-[120px] sm:max-w-none">
+                            {kd.keyDateOwner?.firstName} {kd.keyDateOwner?.lastName}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Escalation dots */}
+                      {!isCompleted && (
+                        <div className="mt-2 flex items-center gap-1">
+                          {ESCALATION_TIERS.map((tier, idx) => (
+                            <div key={idx} className="flex items-center gap-0.5">
+                              {idx > 0 && <div className="h-px w-2 bg-gray-200" />}
+                              <div className={`h-2 w-2 rounded-full ${
+                                idx <= activeTierIndex ? tier.color : "bg-gray-200"
+                              }`} />
+                              <span className={`text-[8px] ${idx <= activeTierIndex ? "font-semibold" : "text-muted-foreground"}`}>
+                                {tier.label}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
 
-                    {/* Escalation dots */}
-                    {!isCompleted && (
-                      <div className="mt-2 flex items-center gap-1">
-                        {ESCALATION_TIERS.map((tier, idx) => (
-                          <div key={idx} className="flex items-center gap-0.5">
-                            {idx > 0 && <div className="h-px w-2 bg-gray-200" />}
-                            <div className={`h-2 w-2 rounded-full ${
-                              idx <= activeTierIndex ? tier.color : "bg-gray-200"
-                            }`} />
-                            <span className={`text-[8px] ${idx <= activeTierIndex ? "font-semibold" : "text-muted-foreground"}`}>
-                              {tier.label}
-                            </span>
-                          </div>
-                        ))}
+                    {isBreach && (
+                      <div className="relative shrink-0">
+                        <AlertTriangle className="h-5 w-5 text-red-500" />
+                        <span className="absolute -top-0.5 -right-0.5 flex h-2 w-2">
+                          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75" />
+                          <span className="relative inline-flex h-2 w-2 rounded-full bg-red-500" />
+                        </span>
                       </div>
                     )}
                   </div>
+                </Link>
 
-                  {isBreach && (
-                    <div className="relative shrink-0">
-                      <AlertTriangle className="h-5 w-5 text-red-500" />
-                      <span className="absolute -top-0.5 -right-0.5 flex h-2 w-2">
-                        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75" />
-                        <span className="relative inline-flex h-2 w-2 rounded-full bg-red-500" />
-                      </span>
-                    </div>
+                {/* Action buttons column */}
+                <div className="flex flex-col items-center justify-center gap-1 border-l px-2 shrink-0 bg-muted/20">
+                  {kd.keyDateOwner?.email && (
+                    <a
+                      href={getMailtoUrl(kd)}
+                      title={`Email ${kd.keyDateOwner.firstName} ${kd.keyDateOwner.lastName}`}
+                      className="p-1.5 rounded-md text-muted-foreground hover:text-primary hover:bg-muted transition-colors"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <Mail className="h-4 w-4" />
+                    </a>
                   )}
+                  <button
+                    onClick={() => downloadICS(kd)}
+                    title="Download .ics (Outlook / Apple Calendar)"
+                    className="p-1.5 rounded-md text-muted-foreground hover:text-blue-600 hover:bg-muted transition-colors"
+                  >
+                    <CalendarPlus className="h-4 w-4" />
+                  </button>
+                  <a
+                    href={getGoogleCalendarUrl(kd)}
+                    target="_blank"
+                    rel="noreferrer"
+                    title="Add to Google Calendar"
+                    className="p-1.5 rounded-md text-muted-foreground hover:text-green-600 hover:bg-muted transition-colors"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <ExternalLink className="h-3.5 w-3.5" />
+                  </a>
                 </div>
-              </Link>
+              </div>
             );
           })}
         </div>

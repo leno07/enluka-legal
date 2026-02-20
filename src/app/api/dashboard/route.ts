@@ -105,7 +105,7 @@ export async function GET(req: NextRequest) {
       take: 5,
       include: {
         matter: { select: { id: true, reference: true, title: true } },
-        keyDateOwner: { select: { id: true, firstName: true, lastName: true } },
+        keyDateOwner: { select: { id: true, firstName: true, lastName: true, email: true } },
       },
     }),
   ]);
